@@ -3,12 +3,14 @@ CoreCipher is a Delphi and FPC library for cryptography.  It provides support fo
 
 supports platform Win32, Win64, OSX, iOS and Android.
 
-supports parallel encryption/decryption
-parallel library from https://github.com/BeRo1985/pasmp
+supports parallel encryption/decryption,(little modify and copy PasMP.pas)
+
+PasMP.pas parallel library from https://github.com/BeRo1985/pasmp
 
 
+
+enjoy.~
 
 create by QQ 600585@qq.com
-
-
+2017-11-15
 
