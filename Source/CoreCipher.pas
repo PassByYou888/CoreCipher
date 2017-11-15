@@ -78,13 +78,13 @@ type
 
   { encryption block types }
   PLBCBlock = ^TLBCBlock;
-  TLBCBlock = array [0 .. 3] of Integer; { LockBox Cipher }
+  TLBCBlock = array [0 .. 3] of Integer; { Cipher Cipher }
 
   PDESBlock = ^TDESBlock;
   TDESBlock = array [0 .. 7] of Byte; { DES }
 
   PLQCBlock = ^TLQCBlock;
-  TLQCBlock = array [0 .. 1] of Integer; { LockBox Quick Cipher }
+  TLQCBlock = array [0 .. 1] of Integer; { Cipher Quick Cipher }
 
   PBFBlock = ^TBFBlock;
   TBFBlock = array [0 .. 1] of Integer; { BlowFish }
@@ -136,7 +136,7 @@ type
   PTripleDESContext3Key = ^TTripleDESContext3Key;
   TTripleDESContext3Key = array [0 .. 2] of TDESContext; { !!.01 }
 
-  { LockBox Cipher }
+  { Cipher Cipher }
   PLBCContext = ^TLBCContext;
 
   TLBCContext = packed record
@@ -148,7 +148,7 @@ type
       1: (SubKeysInts: array [0 .. 3, 0 .. 7] of Integer);
   end;
 
-  { LockBox stream cipher }
+  { Cipher stream cipher }
   PLSCContext = ^TLSCContext;
 
   TLSCContext = packed record
@@ -438,7 +438,7 @@ type
     class procedure UpdateSHA1(var Context: TSHA1Context; const Buf; BufSize: Integer);
   end;
 
-  { LockBox Cipher }
+  { Cipher Cipher }
   TLBC = class(TCoreClassObject)
   public
     class procedure EncryptLBC(const Context: TLBCContext; var Block: TLBCBlock);
@@ -457,7 +457,7 @@ type
     class procedure UpdateMD5(var Context: TMD5Context; const Buf; BufSize: Integer);
   end;
 
-  { LockBox message digest }
+  { Cipher message digest }
   TLMD = class(TCoreClassObject)
   public
     class procedure FinalizeLMD(var Context: TLMDContext; var Digest; DigestSize: Integer);
@@ -477,7 +477,7 @@ type
     class procedure InitEncryptRNG64(KeyHi, KeyLo: Integer; var Context: TRNG64Context); inline;
   end;
 
-  { LockBox Stream Cipher }
+  { Cipher Stream Cipher }
   TLSC = class(TCoreClassObject)
   public
     class procedure EncryptLSC(var Context: TLSCContext; var Buf; BufSize: Integer);
