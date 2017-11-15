@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2016/12/03 03:10:20.000.072,=C:\Users\Administrator\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2016/12/30 00:57:14.000.294,=C:\Users\Administrator\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2016/12/30 02:39:37.000.654,=C:\Users\Administrator\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2016/12/30 02:39:48.000.852,=C:\Users\Administrator\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2017/01/09 15:37:57.000.320,=C:\Users\Administrator\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2017/01/21 03:53:54.000.890,=C:\Users\Administrator\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2017/04/28 09:49:23.000.922,=C:\Users\Administrator\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2017/05/23 12:29:03.000.996,=C:\Users\Administrator\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2017/06/08 02:29:26.000.644,=C:\Users\Administrator\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2017/06/15 00:00:48.000.381,=C:\Users\Administrator\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2017/07/03 19:52:29.000.177,=C:\Users\Administrator\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2017/09/06 15:42:38.000.216,=C:\Users\Administrator\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2017/09/19 15:21:01.000.817,=C:\Users\Administrator\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2017/09/19 15:22:19.000.993,=C:\Users\Administrator\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2017/09/20 04:55:24.000.255,=C:\Users\Administrator\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2017/10/17 16:41:56.000.974,=C:\Users\Administrator\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2017/10/17 16:42:19.000.977,=C:\Users\Administrator\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2017/10/17 16:44:11.000.723,=C:\Users\Administrator\Documents\Embarcadero\Studio\Projects\ServerMethodsUnit1.pas</Transaction>
+    <Transaction>2017/10/17 16:44:12.000.553,=C:\Users\Administrator\Documents\Embarcadero\Studio\Projects\ServerContainerUnit1.pas</Transaction>
+    <Transaction>2017/10/18 01:10:06.000.239,=C:\Users\Administrator\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2017/10/21 05:13:08.000.694,=C:\Users\Administrator\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2017/11/11 22:28:20.000.892,=C:\Users\Administrator\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2017/11/11 22:30:52.000.428,=C:\Users\Administrator\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2017/11/15 20:43:49.655,=C:\Users\Administrator\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2017/11/15 20:44:23.674,C:\git\CoreCipher\Samples\FMX\fmxPerformance.dproj=C:\Users\Administrator\Documents\Embarcadero\Studio\Projects\Project1.dproj</Transaction>
+    <Transaction>2017/11/15 20:44:27.533,=C:\git\CoreCipher\Samples\FMX\Unit1.pas</Transaction>
+    <Transaction>2017/11/15 20:44:51.750,=C:\git\CoreCipher\Source\CoreCipher.pas</Transaction>
+    <Transaction>2017/11/15 20:44:51.755,=C:\git\CoreCipher\Source\CoreClasses.pas</Transaction>
+    <Transaction>2017/11/15 20:44:51.760,=C:\git\CoreCipher\Source\DoStatusIO.pas</Transaction>
+    <Transaction>2017/11/15 20:44:51.770,=C:\git\CoreCipher\Source\ListEngine.pas</Transaction>
+    <Transaction>2017/11/15 20:44:51.776,=C:\git\CoreCipher\Source\MemoryStream64.pas</Transaction>
+    <Transaction>2017/11/15 20:44:51.786,=C:\git\CoreCipher\Source\PascalStrings.pas</Transaction>
+    <Transaction>2017/11/15 20:44:51.877,=C:\git\CoreCipher\Source\PasMP.pas</Transaction>
+    <Transaction>2017/11/15 20:44:51.884,=C:\git\CoreCipher\Source\TextDataEngine.pas</Transaction>
+    <Transaction>2017/11/15 20:44:51.896,=C:\git\CoreCipher\Source\UnicodeMixedLib.pas</Transaction>
+  </Transactions>
+	<ActiveMobileDevice>
+		<NoProfile iOSSimulator="iPhone5" Android="androidtv"/>
+		<Pmini iOSSimulator="_iossimulator_CB011082-14D4-48CA-B31D-8F618031347C" iOSDevice64="_iosdevice_64a3b1b446e7f6e5162d62452b28676831af21c1" iOSDevice32="_iosdevice_64a3b1b446e7f6e5162d62452b28676831af21c1"/>
+	</ActiveMobileDevice>
+</BorlandProject>
