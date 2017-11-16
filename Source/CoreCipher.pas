@@ -310,7 +310,7 @@ type
 
     class function GetBytesKey(const KeyBuffPtr: PCipherKeyBuffer; var key: TBytes): Boolean; overload;
 
-    class procedure EncryptTail(KeyBufPtr: Pointer; KeyBufSize: nativeInt; TailPtr: Pointer; TailSize: nativeInt); inline;
+    class procedure EncryptTail(TailPtr: Pointer; TailSize: nativeInt); inline;
 
     class function OLDDES(sour: Pointer; Size: nativeInt; KeyBuff: PCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean;
 
@@ -331,7 +331,7 @@ type
 
     class function EncryptBuffer(cs: TCipherStyle; sour: Pointer; Size: nativeInt; KeyBuff: PCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean;
 
-    class function EncryptBufferWithBox(cs: TCipherStyle; sour: Pointer; Size: nativeInt; KeyBuff: PCipherKeyBuffer; Encrypt, ProcessTail: Boolean; boxBuff: Pointer; boxSiz: nativeInt): Boolean;
+    class function EncryptBufferCBC(cs: TCipherStyle; sour: Pointer; Size: nativeInt; KeyBuff: PCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean;
   end;
 
   TParallelCipherFunc = procedure(Job, buff, key: Pointer; Size: nativeInt) of object;
@@ -385,7 +385,7 @@ type
 
     function EncryptBuffer(cs: TCipherStyle; sour: Pointer; Size: nativeInt; KeyBuff: PCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean;
 
-    function EncryptBufferWithBox(cs: TCipherStyle; sour: Pointer; Size: nativeInt; KeyBuff: PCipherKeyBuffer; Encrypt, ProcessTail: Boolean; boxBuff: Pointer; boxSiz: nativeInt): Boolean;
+    function EncryptBufferCBC(cs: TCipherStyle; sour: Pointer; Size: nativeInt; KeyBuff: PCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean;
   end;
 
 var
@@ -394,6 +394,10 @@ var
 function SequEncryptWithDirect(const ca: TCipherStyleArray; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean;
 function SequEncryptWithParallel(const ca: TCipherStyleArray; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean;
 function SequEncrypt(const ca: TCipherStyleArray; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean;
+
+function SequEncryptCBCWithDirect(const ca: TCipherStyleArray; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean;
+function SequEncryptCBCWithParallel(const ca: TCipherStyleArray; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean;
+function SequEncryptCBC(const ca: TCipherStyleArray; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean;
 
 function GenerateSequHash(hssArry: THashStyles; sour: Pointer; Size: nativeInt): TPascalString; overload;
 procedure GenerateSequHash(hssArry: THashStyles; sour: Pointer; Size: nativeInt; Output: TCoreClassStrings); overload;
@@ -1530,9 +1534,9 @@ begin
   move((@KeyBuffPtr^[1 + cIntSize])^, key[0], siz);
 end;
 
-class procedure TCipher.EncryptTail(KeyBufPtr: Pointer; KeyBufSize: nativeInt; TailPtr: Pointer; TailSize: nativeInt);
+class procedure TCipher.EncryptTail(TailPtr: Pointer; TailSize: nativeInt);
 begin
-  BlockCBC(TailPtr, TailSize, KeyBufPtr, KeyBufSize);
+  BlockCBC(TailPtr, TailSize, @SysCBC[0], length(SysCBC));
 end;
 
 class function TCipher.OLDDES(sour: Pointer; Size: nativeInt; KeyBuff: PCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean;
@@ -1554,7 +1558,7 @@ begin
   until p + 8 > Size;
 
   if (ProcessTail) and (Size - p > 0) then
-      EncryptTail(KeyBuff, length(KeyBuff^), Pointer(nativeUInt(sour) + p), Size - p);
+      EncryptTail(Pointer(nativeUInt(sour) + p), Size - p);
 
   Result := True;
 end;
@@ -1579,7 +1583,7 @@ begin
   until p + 8 > Size;
 
   if (ProcessTail) and (Size - p > 0) then
-      EncryptTail(KeyBuff, length(KeyBuff^), Pointer(nativeUInt(sour) + p), Size - p);
+      EncryptTail(Pointer(nativeUInt(sour) + p), Size - p);
 
   Result := True;
 end;
@@ -1603,7 +1607,7 @@ begin
     p := p + 8;
   until p + 8 > Size;
   if (ProcessTail) and (Size - p > 0) then
-      EncryptTail(KeyBuff, length(KeyBuff^), Pointer(nativeUInt(sour) + p), Size - p);
+      EncryptTail(Pointer(nativeUInt(sour) + p), Size - p);
   Result := True;
 end;
 
@@ -1625,7 +1629,7 @@ begin
     p := p + 8;
   until p + 8 > Size;
   if (ProcessTail) and (Size - p > 0) then
-      EncryptTail(KeyBuff, length(KeyBuff^), Pointer(nativeUInt(sour) + p), Size - p);
+      EncryptTail(Pointer(nativeUInt(sour) + p), Size - p);
   Result := True;
 end;
 
@@ -1648,7 +1652,7 @@ begin
     p := p + 8;
   until p + 8 > Size;
   if (ProcessTail) and (Size - p > 0) then
-      EncryptTail(KeyBuff, length(KeyBuff^), Pointer(nativeUInt(sour) + p), Size - p);
+      EncryptTail(Pointer(nativeUInt(sour) + p), Size - p);
   Result := True;
 end;
 
@@ -1671,7 +1675,7 @@ begin
     p := p + 16;
   until p + 16 > Size;
   if (ProcessTail) and (Size - p > 0) then
-      EncryptTail(KeyBuff, length(KeyBuff^), Pointer(nativeUInt(sour) + p), Size - p);
+      EncryptTail(Pointer(nativeUInt(sour) + p), Size - p);
   Result := True;
 end;
 
@@ -1692,7 +1696,7 @@ begin
     p := p + 8;
   until p + 8 > Size;
   if (ProcessTail) and (Size - p > 0) then
-      EncryptTail(KeyBuff, length(KeyBuff^), Pointer(nativeUInt(sour) + p), Size - p);
+      EncryptTail(Pointer(nativeUInt(sour) + p), Size - p);
   Result := True;
 end;
 
@@ -1794,7 +1798,7 @@ begin
       until p + 16 > Size;
     end;
   if (ProcessTail) and (Size - p > 0) then
-      EncryptTail(KeyBuff, length(KeyBuff^), Pointer(nativeUInt(sour) + p), Size - p);
+      EncryptTail(Pointer(nativeUInt(sour) + p), Size - p);
   Result := True;
 end;
 
@@ -1826,7 +1830,7 @@ begin
       until p + 64 > Size;
     end;
   if (ProcessTail) and (Size - p > 0) then
-      EncryptTail(KeyBuff, length(KeyBuff^), Pointer(nativeUInt(sour) + p), Size - p);
+      EncryptTail(Pointer(nativeUInt(sour) + p), Size - p);
   Result := True;
 end;
 
@@ -1865,7 +1869,7 @@ begin
     end;
 
   if (ProcessTail) and (Size - p > 0) then
-      EncryptTail(KeyBuff, length(KeyBuff^), Pointer(nativeUInt(sour) + p), Size - p);
+      EncryptTail(Pointer(nativeUInt(sour) + p), Size - p);
   Result := True;
 end;
 
@@ -1911,18 +1915,17 @@ begin
   end;
 end;
 
-class function TCipher.EncryptBufferWithBox(cs: TCipherStyle; sour: Pointer; Size: nativeInt; KeyBuff: PCipherKeyBuffer; Encrypt, ProcessTail: Boolean;
-  boxBuff: Pointer; boxSiz: nativeInt): Boolean;
+class function TCipher.EncryptBufferCBC(cs: TCipherStyle; sour: Pointer; Size: nativeInt; KeyBuff: PCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean;
 begin
   if Encrypt then
     begin
       Result := EncryptBuffer(cs, sour, Size, KeyBuff, Encrypt, ProcessTail);
       if Result then
-          BlockCBC(sour, Size, boxBuff, boxSiz);
+          BlockCBC(sour, Size, @SysCBC[0], length(SysCBC));
     end
   else
     begin
-      BlockCBC(sour, Size, boxBuff, boxSiz);
+      BlockCBC(sour, Size, @SysCBC[0], length(SysCBC));
       Result := EncryptBuffer(cs, sour, Size, KeyBuff, Encrypt, ProcessTail);
     end;
 end;
@@ -2150,7 +2153,7 @@ begin
       tailSiz := Size mod JobData.BlockLen;
 
       if tailSiz > 0 then
-          TCipher.EncryptTail(KeyBuff, length(KeyBuff^), Pointer(nativeUInt(sour) + Size - tailSiz), tailSiz);
+          TCipher.EncryptTail(Pointer(nativeUInt(sour) + Size - tailSiz), tailSiz);
     end;
 
   Result := True;
@@ -2197,7 +2200,7 @@ begin
       tailSiz := Size mod JobData.BlockLen;
 
       if tailSiz > 0 then
-          TCipher.EncryptTail(KeyBuff, length(KeyBuff^), Pointer(nativeUInt(sour) + Size - tailSiz), tailSiz);
+          TCipher.EncryptTail(Pointer(nativeUInt(sour) + Size - tailSiz), tailSiz);
     end;
 
   Result := True;
@@ -2244,7 +2247,7 @@ begin
       tailSiz := Size mod JobData.BlockLen;
 
       if tailSiz > 0 then
-          TCipher.EncryptTail(KeyBuff, length(KeyBuff^), Pointer(nativeUInt(sour) + Size - tailSiz), tailSiz);
+          TCipher.EncryptTail(Pointer(nativeUInt(sour) + Size - tailSiz), tailSiz);
     end;
 
   Result := True;
@@ -2291,7 +2294,7 @@ begin
       tailSiz := Size mod JobData.BlockLen;
 
       if tailSiz > 0 then
-          TCipher.EncryptTail(KeyBuff, length(KeyBuff^), Pointer(nativeUInt(sour) + Size - tailSiz), tailSiz);
+          TCipher.EncryptTail(Pointer(nativeUInt(sour) + Size - tailSiz), tailSiz);
     end;
 
   Result := True;
@@ -2338,7 +2341,7 @@ begin
       tailSiz := Size mod JobData.BlockLen;
 
       if tailSiz > 0 then
-          TCipher.EncryptTail(KeyBuff, length(KeyBuff^), Pointer(nativeUInt(sour) + Size - tailSiz), tailSiz);
+          TCipher.EncryptTail(Pointer(nativeUInt(sour) + Size - tailSiz), tailSiz);
     end;
 
   Result := True;
@@ -2382,7 +2385,7 @@ begin
       tailSiz := Size mod JobData.BlockLen;
 
       if tailSiz > 0 then
-          TCipher.EncryptTail(KeyBuff, length(KeyBuff^), Pointer(nativeUInt(sour) + Size - tailSiz), tailSiz);
+          TCipher.EncryptTail(Pointer(nativeUInt(sour) + Size - tailSiz), tailSiz);
     end;
 
   Result := True;
@@ -2432,7 +2435,7 @@ begin
       tailSiz := Size mod JobData.BlockLen;
 
       if tailSiz > 0 then
-          TCipher.EncryptTail(KeyBuff, length(KeyBuff^), Pointer(nativeUInt(sour) + Size - tailSiz), tailSiz);
+          TCipher.EncryptTail(Pointer(nativeUInt(sour) + Size - tailSiz), tailSiz);
     end;
 
   Result := True;
@@ -2476,7 +2479,7 @@ begin
       tailSiz := Size mod JobData.BlockLen;
 
       if tailSiz > 0 then
-          TCipher.EncryptTail(KeyBuff, length(KeyBuff^), Pointer(nativeUInt(sour) + Size - tailSiz), tailSiz);
+          TCipher.EncryptTail(Pointer(nativeUInt(sour) + Size - tailSiz), tailSiz);
     end;
 
   Result := True;
@@ -2526,7 +2529,7 @@ begin
       tailSiz := Size mod JobData.BlockLen;
 
       if tailSiz > 0 then
-          TCipher.EncryptTail(KeyBuff, length(KeyBuff^), Pointer(nativeUInt(sour) + Size - tailSiz), tailSiz);
+          TCipher.EncryptTail(Pointer(nativeUInt(sour) + Size - tailSiz), tailSiz);
     end;
 
   Result := True;
@@ -2595,18 +2598,17 @@ begin
   end;
 end;
 
-function TParallelCipher.EncryptBufferWithBox(cs: TCipherStyle; sour: Pointer; Size: nativeInt; KeyBuff: PCipherKeyBuffer; Encrypt, ProcessTail: Boolean;
-  boxBuff: Pointer; boxSiz: nativeInt): Boolean;
+function TParallelCipher.EncryptBufferCBC(cs: TCipherStyle; sour: Pointer; Size: nativeInt; KeyBuff: PCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean;
 begin
   if Encrypt then
     begin
       Result := EncryptBuffer(cs, sour, Size, KeyBuff, Encrypt, ProcessTail);
       if Result then
-          BlockCBC(sour, Size, boxBuff, boxSiz);
+          BlockCBC(sour, Size, @SysCBC[0], length(SysCBC));
     end
   else
     begin
-      BlockCBC(sour, Size, boxBuff, boxSiz);
+      BlockCBC(sour, Size, @SysCBC[0], length(SysCBC));
       Result := EncryptBuffer(cs, sour, Size, KeyBuff, Encrypt, ProcessTail);
     end;
 end;
@@ -2695,6 +2697,81 @@ begin
       Result := SequEncryptWithParallel(ca, sour, Size, key, Encrypt, ProcessTail)
   else
       Result := SequEncryptWithDirect(ca, sour, Size, key, Encrypt, ProcessTail);
+end;
+
+function SequEncryptCBCWithDirect(const ca: TCipherStyleArray; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean;
+var
+  i : Integer;
+  cs: TCipherStyle;
+  k : TCipherKeyBuffer;
+begin
+  Result := True;
+
+  if Encrypt then
+    begin
+      for i := low(ca) to high(ca) do
+        begin
+          cs := ca[i];
+          TCipher.GenerateKey(cs, @key[0], length(key), k);
+          Result := Result and TCipher.EncryptBufferCBC(cs, sour, Size, @k, Encrypt, ProcessTail);
+        end;
+    end
+  else
+    begin
+      for i := high(ca) downto low(ca) do
+        begin
+          cs := ca[i];
+          TCipher.GenerateKey(cs, @key[0], length(key), k);
+          Result := Result and TCipher.EncryptBufferCBC(cs, sour, Size, @k, Encrypt, ProcessTail);
+        end;
+    end;
+end;
+
+function SequEncryptCBCWithParallel(const ca: TCipherStyleArray; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean;
+var
+  i       : Integer;
+  cs      : TCipherStyle;
+  k       : TCipherKeyBuffer;
+  Parallel: TParallelCipher;
+begin
+  Result := True;
+
+  if Encrypt then
+    begin
+      for i := low(ca) to high(ca) do
+        begin
+          cs := ca[i];
+          TCipher.GenerateKey(cs, @key[0], length(key), k);
+
+          Parallel := TParallelCipher.Create;
+          Parallel.ParallelGranularity := Size div 64;
+          Parallel.ParallelDepth := 8;
+          Result := Result and Parallel.EncryptBufferCBC(cs, sour, Size, @k, Encrypt, ProcessTail);
+          DisposeObject(Parallel);
+        end;
+    end
+  else
+    begin
+      for i := high(ca) downto low(ca) do
+        begin
+          cs := ca[i];
+          TCipher.GenerateKey(cs, @key[0], length(key), k);
+
+          Parallel := TParallelCipher.Create;
+          Parallel.ParallelGranularity := Size div 64;
+          Parallel.ParallelDepth := 8;
+          Result := Result and Parallel.EncryptBufferCBC(cs, sour, Size, @k, Encrypt, ProcessTail);
+          DisposeObject(Parallel);
+        end;
+    end;
+end;
+
+function SequEncryptCBC(const ca: TCipherStyleArray; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean;
+begin
+  if Size > 1024 then
+      Result := SequEncryptCBCWithParallel(ca, sour, Size, key, Encrypt, ProcessTail)
+  else
+      Result := SequEncryptCBCWithDirect(ca, sour, Size, key, Encrypt, ProcessTail);
 end;
 
 function GenerateSequHash(hssArry: THashStyles; sour: Pointer; Size: nativeInt): TPascalString;
@@ -2846,14 +2923,13 @@ var
   hByte: TBytes;
 
   Parallel: TParallelCipher;
-  cbcBuff : TBytes;
 
   ps: TCoreClassStrings;
 begin
   IDEOutput := True;
 
   // hash and Sequence Encrypt
-  SetLength(buffer, 256 * 1024);
+  SetLength(buffer, 1024 * 1024);
   FillByte(buffer[0], length(buffer), 99);
 
   ps := TCoreClassStringList.Create;
@@ -2866,7 +2942,7 @@ begin
       DoStatus('hash compare failed!');
 
   DoStatus('test Sequence Encrypt');
-  k := TPascalString('hello world hhhh').Bytes;
+  k := TPascalString('hello world').Bytes;
   if not SequEncryptWithDirect(TCipher.AllCipher, @buffer[0], length(buffer), k, True, True) then
       DoStatus('SequEncrypt failed!');
   if not SequEncryptWithDirect(TCipher.AllCipher, @buffer[0], length(buffer), k, False, True) then
@@ -2879,7 +2955,6 @@ begin
   // cipher Encrypt performance
   SetLength(buffer, 8 * 1024 * 1024 + 99);
   FillByte(buffer[0], length(buffer), $7F);
-  cbcBuff := TPascalString('hello world').Bytes;
 
   sour := TMemoryStream64.Create;
   dest := TMemoryStream64.Create;
@@ -2909,9 +2984,9 @@ begin
 
       d := TCoreClassThread.GetTickCount;
 
-      if not Parallel.EncryptBufferWithBox(cs, dest.Memory, dest.Size, @k, True, True, @cbcBuff[0], length(cbcBuff)) then
+      if not Parallel.EncryptBufferCBC(cs, dest.Memory, dest.Size, @k, True, True) then
           DoStatus('%s: parallel encode failed', [GetEnumName(TypeInfo(TCipherStyle), Integer(cs))]);
-      if not Parallel.EncryptBufferWithBox(cs, dest.Memory, dest.Size, @k, False, True, @cbcBuff[0], length(cbcBuff)) then
+      if not Parallel.EncryptBufferCBC(cs, dest.Memory, dest.Size, @k, False, True) then
           DoStatus('%s: parallel decode failed', [GetEnumName(TypeInfo(TCipherStyle), Integer(cs))]);
       DoStatus('%s - parallel performance:%dms', [GetEnumName(TypeInfo(TCipherStyle), Integer(cs)), TCoreClassThread.GetTickCount - d]);
 
@@ -2934,9 +3009,9 @@ begin
       dest.Position := 0;
 
       d := TCoreClassThread.GetTickCount;
-      if not TCipher.EncryptBufferWithBox(cs, dest.Memory, dest.Size, @k, True, True, @cbcBuff[0], length(cbcBuff)) then
+      if not TCipher.EncryptBufferCBC(cs, dest.Memory, dest.Size, @k, True, True) then
           DoStatus('%s: encode failed', [GetEnumName(TypeInfo(TCipherStyle), Integer(cs))]);
-      if not TCipher.EncryptBufferWithBox(cs, dest.Memory, dest.Size, @k, False, True, @cbcBuff[0], length(cbcBuff)) then
+      if not TCipher.EncryptBufferCBC(cs, dest.Memory, dest.Size, @k, False, True) then
           DoStatus('%s: decode failed', [GetEnumName(TypeInfo(TCipherStyle), Integer(cs))]);
       DoStatus('%s - normal performance:%dms', [GetEnumName(TypeInfo(TCipherStyle), Integer(cs)), TCoreClassThread.GetTickCount - d]);
       if not TCipher.CompareHash(TCipher.GenerateSha1Hash(dest.Memory, dest.Size), sourHash) then
