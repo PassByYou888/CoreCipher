@@ -1,7 +1,7 @@
-{******************************************************************************}
-{* string support,writen by QQ 600585@qq.com                                 *}
-{* https://github.com/PassByYou888/CoreCipher                                 *}
-{******************************************************************************}
+{ ****************************************************************************** }
+{ * string support,writen by QQ 600585@qq.com                                 * }
+{ * https://github.com/PassByYou888/CoreCipher                                 * }
+{ ****************************************************************************** }
 
 unit PascalStrings;
 
@@ -122,13 +122,13 @@ operator := (const s: Variant)r: TPascalString;
 
 operator := (const s: AnsiString)r: TPascalString;
 operator := (const s: UnicodeString)r: TPascalString;
-operator := (const s: SystemString)r: TPascalString;
+operator := (const s: ShortString)r: TPascalString;
 
 operator := (const c: SystemChar)r: TPascalString;
 
 operator := (const s: TPascalString)r: AnsiString;
 operator := (const s: TPascalString)r: UnicodeString;
-operator := (const s: TPascalString)r: SystemString;
+operator := (const s: TPascalString)r: ShortString;
 operator := (const s: TPascalString)r: Variant;
 
 operator = (const A: TPascalString; const B: TPascalString): Boolean;
@@ -360,7 +360,7 @@ begin
   r.Text := s;
 end;
 
-operator := (const s: SystemString)r: TPascalString;
+operator := (const s: ShortString)r: TPascalString;
 begin
   r.Text := s;
 end;
@@ -375,17 +375,17 @@ begin
   r := s.Text;
 end;
 
-operator := (const s: TPascalString)r: Variant;
-begin
-  r := s.Text;
-end;
-
 operator := (const s: TPascalString)r: UnicodeString;
 begin
   r := s.Text;
 end;
 
-operator := (const s: TPascalString)r: SystemString;
+operator := (const s: TPascalString)r: ShortString;
+begin
+  r := s.Text;
+end;
+
+operator := (const s: TPascalString)r: Variant;
 begin
   r := s.Text;
 end;

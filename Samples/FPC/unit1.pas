@@ -35,7 +35,7 @@ type
     { private declarations }
   public
     { public declarations }
-    procedure DoStatusNear(AText: shortstring; const ID: Integer=0);
+    procedure DoStatusNear(AText: string; const ID: Integer=0);
   end;
 
 var
@@ -46,7 +46,7 @@ implementation
 {$R *.lfm}
 
 { TForm1 }
-procedure TForm1.DoStatusNear(AText: shortstring; const ID: Integer=0);
+procedure TForm1.DoStatusNear(AText: string; const ID: Integer=0);
 begin
   Form1.Memo1.Lines.Add(AText);
   Application.ProcessMessages;

@@ -1,7 +1,7 @@
-{******************************************************************************}
-{* hash List Library,Wrten by QQ 600585@qq.com                                *}
-{* https://github.com/PassByYou888/CoreCipher                                 *}
-{******************************************************************************}
+{ ****************************************************************************** }
+{ * hash List Library,Wrten by QQ 600585@qq.com                                * }
+{ * https://github.com/PassByYou888/CoreCipher                                 * }
+{ ****************************************************************************** }
 unit ListEngine;
 
 {$I zDefine.inc}
@@ -590,9 +590,14 @@ implementation
 
 uses DoStatusIO, UnicodeMixedLib, TextDataEngine;
 
-function MakeHash(var s: string): THash; inline;
+function MakeHash(var s: SystemString): THash; inline; overload;
 begin
   Result := FastHashSystemString(@s);
+end;
+
+function MakeHash(var s: TPascalString): THash; inline; overload;
+begin
+  Result := FastHashPascalString(@s);
 end;
 
 function LoadSectionTextAsObjectList(AText: string): TCoreClassStrings;
@@ -2704,7 +2709,7 @@ begin
   with PListStringData(FList[Idx])^ do
     begin
       Data := Value;
-      Hash := FastHashSystemString(@Value);
+      Hash := MakeHash(Value);
     end;
 end;
 
@@ -2727,7 +2732,7 @@ var
 begin
   New(p);
   p^.Data := Value;
-  p^.Hash := FastHashSystemString(@Value);
+  p^.Hash := MakeHash(Value);
   Result := FList.Add(p);
 end;
 
@@ -2748,7 +2753,7 @@ var
   p: PListStringData;
 begin
   i := 0;
-  h := FastHashSystemString(@Value);
+  h := MakeHash(Value);
 
   while i < Count do
     begin
@@ -2777,7 +2782,7 @@ var
   h: THash;
   p: PListStringData;
 begin
-  h := FastHashSystemString(@Value);
+  h := MakeHash(Value);
 
   Result := -1;
 
@@ -2809,7 +2814,7 @@ begin
   with PListPascalStringData(FList[Idx])^ do
     begin
       Data := Value;
-      Hash := FastHashPascalString(@Value);
+      Hash := MakeHash(Value);
     end;
 end;
 
@@ -2832,7 +2837,7 @@ var
 begin
   New(p);
   p^.Data := Value;
-  p^.Hash := FastHashPascalString(@Value);
+  p^.Hash := MakeHash(Value);
   Result := FList.Add(p);
 end;
 
@@ -2852,7 +2857,7 @@ var
   h: THash;
 begin
   i := 0;
-  h := FastHashPascalString(@Value);
+  h := MakeHash(Value);
   while i < FList.Count do
     begin
       if (PListPascalStringData(FList[i])^.Hash = h) and (PListPascalStringData(FList[i])^.Data.Same(Value)) then
@@ -2879,7 +2884,7 @@ var
   i: Integer;
   h: THash;
 begin
-  h := FastHashPascalString(@Value);
+  h := MakeHash(Value);
   Result := -1;
 
   for i := 0 to FList.Count - 1 do

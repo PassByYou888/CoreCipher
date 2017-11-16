@@ -20,16 +20,7 @@
 
 {$WARNINGS OFF}
 {$HINTS OFF}
-
+{$H+} {long string}
+{$R-} {range check}
 {$A+} {Word Align Data}
-{$Q-} {Overflow Checking}
-{$R-} {Range-Checking}
-{$S-} {Stack-Overflow Checking}
-{$V-} {Var-String Checking}
-{$B-} {Complete Boolean Evaluation}
-{$I+} {Input/Output-Checking}
-{$P+} {Open Parameters}
-{$T-} {Typed @ Operator}
-{$W-} {Windows Stack Frame}
-{$X+} {Extended Syntax}
 

@@ -1,4 +1,4 @@
-program FPCPerformanceTest;
+program FPCperformanceTest;
 
 {$mode objfpc}{$H+}
 
