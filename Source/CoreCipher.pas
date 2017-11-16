@@ -219,8 +219,9 @@ type
   TCipher = class(TCoreClassObject)
   public
     const
-    CAllHash: THashStyles                   = [hsNone, hsFastMD5, hsMD5, hsSHA1, hs256, hs128, hs64, hs32, hs16, hsELF, hsMix128, hsCRC16, hsCRC32];
-    CHashName: array [THashStyle] of string = ('None', 'FastMD5', 'MD5', 'SHA1', '256', '128', '64', '32', '16', 'ELF', 'Mix128', 'CRC16', 'CRC32');
+    CAllHash: THashStyles                            = [hsNone, hsFastMD5, hsMD5, hsSHA1, hs256, hs128, hs64, hs32, hs16, hsELF, hsMix128, hsCRC16, hsCRC32];
+    CHashName: array [THashStyle] of string          = ('None', 'FastMD5', 'MD5', 'SHA1', '256', '128', '64', '32', '16', 'ELF', 'Mix128', 'CRC16', 'CRC32');
+    CCipherStyleName: array [TCipherStyle] of string = ('None', 'DES64', 'DES128', 'DES192', 'Blowfish', 'LBC', 'LQC', 'RNG32', 'RNG64', 'LSC', 'TwoFish', 'XXTea128', 'RC6');
 
     cCipherKeyStyle: array [TCipherStyle] of TCipherKeyStyle =
       (
@@ -253,6 +254,8 @@ type
     class function CompareHash(h1, h2: TMD5Digest): Boolean; overload;
     class function CompareHash(h1, h2: Pointer; Size: Word): Boolean; overload;
     class function CompareHash(h1, h2: TBytes): Boolean; overload;
+
+    class function CompareKey(k1, k2: TCipherKeyBuffer): Boolean; overload;
 
     class function GenerateSha1Hash(sour: Pointer; Size: nativeInt): TSHA1Digest;
     class function GenerateMD5Hash(sour: Pointer; Size: nativeInt): TMD5Digest;
@@ -385,18 +388,16 @@ type
     function EncryptBufferWithBox(cs: TCipherStyle; sour: Pointer; Size: nativeInt; KeyBuff: PCipherKeyBuffer; Encrypt, ProcessTail: Boolean; boxBuff: Pointer; boxSiz: nativeInt): Boolean;
   end;
 
-function SequEncryptWithDirect(const ca: TCipherStyleArray; sour: Pointer; Size: nativeInt; key: TBytes; Encrypt, ProcessTail: Boolean): Boolean;
-function SequByteEncryptWithDirect(const ca: TCipherStyleArray; sour: TBytes; key: TBytes; Encrypt, ProcessTail: Boolean): TBytes;
+var
+  SysCBC: TBytes;
 
-function SequEncryptWithParallel(const ca: TCipherStyleArray; sour: Pointer; Size: nativeInt; key: TBytes; Encrypt, ProcessTail: Boolean): Boolean;
-function SequByteEncryptWithParallel(const ca: TCipherStyleArray; sour: TBytes; key: TBytes; Encrypt, ProcessTail: Boolean): TBytes;
+function SequEncryptWithDirect(const ca: TCipherStyleArray; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean;
+function SequEncryptWithParallel(const ca: TCipherStyleArray; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean;
+function SequEncrypt(const ca: TCipherStyleArray; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean;
 
-function SequEncrypt(const ca: TCipherStyleArray; sour: Pointer; Size: nativeInt; key: TBytes; Encrypt, ProcessTail: Boolean): Boolean;
-function SequByteEncrypt(const ca: TCipherStyleArray; sour: TBytes; key: TBytes; Encrypt, ProcessTail: Boolean): TBytes;
-
-function GenerateSequHash(hashArry: THashStyles; sour: Pointer; Size: nativeInt): TPascalString; overload;
-procedure GenerateSequHash(hashArry: THashStyles; sour: Pointer; Size: nativeInt; Output: TCoreClassStrings); overload;
-procedure GenerateSequHash(hashArry: THashStyles; sour: Pointer; Size: nativeInt; Output: TCoreClassStream); overload;
+function GenerateSequHash(hssArry: THashStyles; sour: Pointer; Size: nativeInt): TPascalString; overload;
+procedure GenerateSequHash(hssArry: THashStyles; sour: Pointer; Size: nativeInt; Output: TCoreClassStrings); overload;
+procedure GenerateSequHash(hssArry: THashStyles; sour: Pointer; Size: nativeInt; Output: TCoreClassStream); overload;
 
 function CompareSequHash(HashVL: THashVariantList; sour: Pointer; Size: nativeInt): Boolean; overload;
 function CompareSequHash(hashData: TPascalString; sour: Pointer; Size: nativeInt): Boolean; overload;
@@ -1079,10 +1080,10 @@ end;
 
 class procedure TCipher.HashToString(hash: TBytes; var Output: string);
 var
-  b: Byte;
+  s: TPascalString;
 begin
-  for b in hash do
-      Output := Output + IntToHex(b, 2);
+  HashToString(@hash[0], length(hash), s);
+  Output := s.Text;
 end;
 
 class function TCipher.CompareHash(h1, h2: TSHA1Digest): Boolean;
@@ -1103,6 +1104,11 @@ end;
 class function TCipher.CompareHash(h1, h2: TBytes): Boolean;
 begin
   Result := (length(h1) = length(h2)) and (CompareMemory(@h1[0], @h2[0], length(h1)));
+end;
+
+class function TCipher.CompareKey(k1, k2: TCipherKeyBuffer): Boolean;
+begin
+  Result := (length(k1) = length(k2)) and (CompareMemory(@k1[0], @k2[0], length(k1)));
 end;
 
 class function TCipher.GenerateSha1Hash(sour: Pointer; Size: nativeInt): TSHA1Digest;
@@ -2605,7 +2611,18 @@ begin
     end;
 end;
 
-function SequEncryptWithDirect(const ca: TCipherStyleArray; sour: Pointer; Size: nativeInt; key: TBytes; Encrypt, ProcessTail: Boolean): Boolean;
+procedure InitSysCBC;
+var
+  i   : Integer;
+  Seed: TInt64;
+begin
+  SetLength(SysCBC, 2048);
+  Seed.i := 0;
+  for i := low(SysCBC) to high(SysCBC) do
+      SysCBC[i] := TMISC.Random64(Seed);
+end;
+
+function SequEncryptWithDirect(const ca: TCipherStyleArray; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean;
 var
   i : Integer;
   cs: TCipherStyle;
@@ -2633,14 +2650,7 @@ begin
     end;
 end;
 
-function SequByteEncryptWithDirect(const ca: TCipherStyleArray; sour: TBytes; key: TBytes; Encrypt, ProcessTail: Boolean): TBytes;
-begin
-  Result := sour;
-  if not SequEncryptWithDirect(ca, @Result[0], length(Result), key, Encrypt, ProcessTail) then
-      SetLength(Result, 0);
-end;
-
-function SequEncryptWithParallel(const ca: TCipherStyleArray; sour: Pointer; Size: nativeInt; key: TBytes; Encrypt, ProcessTail: Boolean): Boolean;
+function SequEncryptWithParallel(const ca: TCipherStyleArray; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean;
 var
   i       : Integer;
   cs      : TCipherStyle;
@@ -2679,30 +2689,15 @@ begin
     end;
 end;
 
-function SequByteEncryptWithParallel(const ca: TCipherStyleArray; sour: TBytes; key: TBytes; Encrypt, ProcessTail: Boolean): TBytes;
+function SequEncrypt(const ca: TCipherStyleArray; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean;
 begin
-  Result := sour;
-  if not SequEncryptWithParallel(ca, @Result[0], length(Result), key, Encrypt, ProcessTail) then
-      SetLength(Result, 0);
-end;
-
-function SequEncrypt(const ca: TCipherStyleArray; sour: Pointer; Size: nativeInt; key: TBytes; Encrypt, ProcessTail: Boolean): Boolean;
-begin
-  if Size > 8192 then
+  if Size > 1024 then
       Result := SequEncryptWithParallel(ca, sour, Size, key, Encrypt, ProcessTail)
   else
       Result := SequEncryptWithDirect(ca, sour, Size, key, Encrypt, ProcessTail);
 end;
 
-function SequByteEncrypt(const ca: TCipherStyleArray; sour: TBytes; key: TBytes; Encrypt, ProcessTail: Boolean): TBytes;
-begin
-  if length(sour) > 8192 then
-      Result := SequByteEncryptWithParallel(ca, sour, key, Encrypt, ProcessTail)
-  else
-      Result := SequByteEncryptWithDirect(ca, sour, key, Encrypt, ProcessTail);
-end;
-
-function GenerateSequHash(hashArry: THashStyles; sour: Pointer; Size: nativeInt): TPascalString;
+function GenerateSequHash(hssArry: THashStyles; sour: Pointer; Size: nativeInt): TPascalString;
 var
   h    : THashStyle;
   vl   : THashVariantList;
@@ -2710,7 +2705,7 @@ var
   n    : string;
 begin
   vl := THashVariantList.Create;
-  for h in hashArry do
+  for h in hssArry do
     begin
       TCipher.GenerateHashByte(h, sour, Size, hBuff);
       n := '';
@@ -2723,7 +2718,7 @@ begin
   DisposeObject([vl]);
 end;
 
-procedure GenerateSequHash(hashArry: THashStyles; sour: Pointer; Size: nativeInt; Output: TCoreClassStrings);
+procedure GenerateSequHash(hssArry: THashStyles; sour: Pointer; Size: nativeInt; Output: TCoreClassStrings);
 var
   h    : THashStyle;
   vl   : THashVariantList;
@@ -2731,7 +2726,7 @@ var
   n    : string;
 begin
   vl := THashVariantList.Create;
-  for h in hashArry do
+  for h in hssArry do
     begin
       TCipher.GenerateHashByte(h, sour, Size, hBuff);
       n := '';
@@ -2744,7 +2739,7 @@ begin
   DisposeObject([vl]);
 end;
 
-procedure GenerateSequHash(hashArry: THashStyles; sour: Pointer; Size: nativeInt; Output: TCoreClassStream);
+procedure GenerateSequHash(hssArry: THashStyles; sour: Pointer; Size: nativeInt; Output: TCoreClassStream);
 var
   h    : THashStyle;
   vl   : THashVariantList;
@@ -2752,7 +2747,7 @@ var
   n    : string;
 begin
   vl := THashVariantList.Create;
-  for h in hashArry do
+  for h in hssArry do
     begin
       TCipher.GenerateHashByte(h, sour, Size, hBuff);
       n := '';
@@ -2857,6 +2852,7 @@ var
 begin
   IDEOutput := True;
 
+  // hash and Sequence Encrypt
   SetLength(buffer, 256 * 1024);
   FillByte(buffer[0], length(buffer), 99);
 
@@ -2870,15 +2866,17 @@ begin
       DoStatus('hash compare failed!');
 
   DoStatus('test Sequence Encrypt');
-  if not SequEncryptWithDirect(TCipher.AllCipher, @buffer[0], length(buffer), TPascalString('hello world hhhh').Bytes, True, True) then
+  k := TPascalString('hello world hhhh').Bytes;
+  if not SequEncryptWithDirect(TCipher.AllCipher, @buffer[0], length(buffer), k, True, True) then
       DoStatus('SequEncrypt failed!');
-  if not SequEncryptWithDirect(TCipher.AllCipher, @buffer[0], length(buffer), TPascalString('hello world hhhh').Bytes, False, True) then
+  if not SequEncryptWithDirect(TCipher.AllCipher, @buffer[0], length(buffer), k, False, True) then
       DoStatus('SequEncrypt failed!');
 
   DoStatus('verify Sequence Encrypt');
   if not CompareSequHash(ps, @buffer[0], length(buffer)) then
       DoStatus('hash compare failed!');
 
+  // cipher Encrypt performance
   SetLength(buffer, 8 * 1024 * 1024 + 99);
   FillByte(buffer[0], length(buffer), $7F);
   cbcBuff := TPascalString('hello world').Bytes;
@@ -2945,6 +2943,7 @@ begin
           DoStatus('%s hash error!', [GetEnumName(TypeInfo(TCipherStyle), Integer(cs))]);
     end;
 
+  // hash performance
   DoStatus(#13#10'hash performance test');
   dest.Clear;
   sour.Position := 0;
@@ -5051,7 +5050,8 @@ end;
 
 initialization
 
-TPasMP.CreateGlobalInstance;
+InitSysCBC;
 DCP_towfish_Precomp;
+TPasMP.CreateGlobalInstance;
 
 end.

@@ -1,7 +1,7 @@
-{******************************************************************************}
-{* support > 2G TMemoryStream64, writen by QQ 600585@qq.com                   *}
-{* https://github.com/PassByYou888/CoreCipher                                 *}
-{******************************************************************************}
+{ ****************************************************************************** }
+{ * support > 2G TMemoryStream64, writen by QQ 600585@qq.com                   * }
+{ * https://github.com/PassByYou888/CoreCipher                                 * }
+{ ****************************************************************************** }
 
 unit MemoryStream64;
 
@@ -27,11 +27,13 @@ uses
 type
   TMemoryStream64 = class(TCoreClassStream)
   private
-    FMemory  : Pointer;
-    FSize    : NativeUInt;
-    FPosition: NativeUInt;
-    FCapacity: NativeUInt;
+    FMemory       : Pointer;
+    FSize         : NativeUInt;
+    FPosition     : NativeUInt;
+    FCapacity     : NativeUInt;
+    FProtectedMode: Boolean;
   protected
+    procedure SetPointer(BuffPtr: Pointer; const BuffSize: NativeUInt);
     procedure SetCapacity(NewCapacity: NativeUInt);
     function Realloc(var NewCapacity: NativeUInt): Pointer; virtual;
     property Capacity: NativeUInt read FCapacity write SetCapacity;
@@ -40,7 +42,7 @@ type
     destructor Destroy; override;
     procedure Clear;
 
-    procedure SetPointer(BuffPtr: Pointer; const BuffSize: NativeUInt);
+    procedure SetPointerWithProtectedMode(BuffPtr: Pointer; const BuffSize: NativeUInt);
 
     procedure LoadFromStream(Stream: TCoreClassStream);
     procedure LoadFromFile(const FileName: string);
@@ -97,6 +99,12 @@ function DecompressStreamToPtr(Sour: TCoreClassStream; var DeTo: Pointer): Boole
 
 implementation
 
+procedure TMemoryStream64.SetPointer(BuffPtr: Pointer; const BuffSize: NativeUInt);
+begin
+  FMemory := BuffPtr;
+  FSize := BuffSize;
+end;
+
 procedure TMemoryStream64.SetCapacity(NewCapacity: NativeUInt);
 begin
   SetPointer(Realloc(NewCapacity), FSize);
@@ -136,6 +144,7 @@ begin
   FSize := 0;
   FPosition := 0;
   FCapacity := 0;
+  FProtectedMode := False;
 end;
 
 destructor TMemoryStream64.Destroy;
@@ -146,15 +155,22 @@ end;
 
 procedure TMemoryStream64.Clear;
 begin
+  if FProtectedMode then
+      exit;
   SetCapacity(0);
   FSize := 0;
   FPosition := 0;
 end;
 
-procedure TMemoryStream64.SetPointer(BuffPtr: Pointer; const BuffSize: NativeUInt);
+procedure TMemoryStream64.SetPointerWithProtectedMode(BuffPtr: Pointer; const BuffSize: NativeUInt);
 begin
+  if FProtectedMode then
+      exit;
+
+  Clear;
   FMemory := BuffPtr;
   FSize := BuffSize;
+  FPosition := 0;
 end;
 
 procedure TMemoryStream64.LoadFromStream(Stream: TCoreClassStream);
@@ -166,6 +182,9 @@ var
   Num : Integer;
   Rest: Integer;
 begin
+  if FProtectedMode then
+      exit;
+
   Stream.Position := 0;
   SetSize(Stream.Size);
   if Stream.Size > 0 then
@@ -263,6 +282,9 @@ procedure TMemoryStream64.SetSize(const NewSize: Int64);
 var
   OldPosition: Int64;
 begin
+  if FProtectedMode then
+      exit;
+
   OldPosition := FPosition;
   SetCapacity(NewSize);
   FSize := NewSize;
@@ -279,6 +301,12 @@ function TMemoryStream64.Write64(const Buffer; Count: Int64): Int64;
 var
   p: Int64;
 begin
+  if FProtectedMode then
+    begin
+      Result := 0;
+      exit;
+    end;
+
   if (FPosition >= 0) and (Count >= 0) then
     begin
       p := FPosition;
@@ -294,7 +322,7 @@ begin
           System.Move(Buffer, PByte(NativeUInt(FMemory) + FPosition)^, Count);
           FPosition := p;
           Result := Count;
-          Exit;
+          exit;
         end;
     end;
   Result := 0;
@@ -332,7 +360,7 @@ begin
           System.Move(Buffer[Offset], PByte(NativeUInt(FMemory) + FPosition)^, Count);
           FPosition := p;
           Result := Count;
-          Exit;
+          exit;
         end;
     end;
   Result := 0;
@@ -352,7 +380,7 @@ begin
               Result := Count;
           System.Move(PByte(NativeUInt(FMemory) + FPosition)^, Buffer, Result);
           Inc(FPosition, Result);
-          Exit;
+          exit;
         end;
     end;
   Result := 0;
@@ -387,7 +415,7 @@ begin
           System.Move(PByte(NativeUInt(FMemory) + FPosition)^, Buffer[Offset], p);
           Inc(FPosition, p);
           Result := p;
-          Exit;
+          exit;
         end;
     end;
   Result := 0;
@@ -412,6 +440,9 @@ var
   BufSize, N: Int64;
   Buffer    : TBytes;
 begin
+  if FProtectedMode then
+      exit;
+
   if Count <= 0 then
     begin
       Source.Position := 0;
