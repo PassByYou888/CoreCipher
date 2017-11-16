@@ -1,7 +1,7 @@
-{******************************************************************************}
-{* MixedLibrary,writen by QQ 600585@qq.com                                    *}
-{* https://github.com/PassByYou888/CoreCipher                                 *}
-{******************************************************************************}
+{ ****************************************************************************** }
+{ * MixedLibrary,writen by QQ 600585@qq.com                                    * }
+{ * https://github.com/PassByYou888/CoreCipher                                 * }
+{ ****************************************************************************** }
 { ***************************************************************
   *
   * Unit Name: MixedLibrary
@@ -264,8 +264,12 @@ function umlCharReplace(S: umlString; OldPattern, NewPattern: umlChar): umlStrin
 
 function umlEncodeText2HTML(psSrc: umlString): umlString;
 
-procedure umlBase64EncodeBytes(var Sour, Dest: TBytes);
-procedure umlBase64DecodeBytes(var Sour, Dest: TBytes);
+procedure umlBase64EncodeBytes(var Sour, Dest: TBytes); overload;
+procedure umlBase64EncodeBytes(var Sour: TBytes; var Dest: umlString); overload;
+
+procedure umlBase64DecodeBytes(var Sour, Dest: TBytes); overload;
+procedure umlBase64DecodeBytes(Sour: umlString; var Dest: TBytes); overload;
+
 procedure umlDecodeLineBASE64(Buffer: umlString; var Output: umlString);
 procedure umlEncodeLineBASE64(Buffer: umlString; var Output: umlString);
 procedure umlDecodeStreamBASE64(Buffer: umlString; Output: TCoreClassStream);
@@ -312,9 +316,10 @@ procedure umlDES(DataPtr: Pointer; Size: Cardinal; const Key: TDESKey; Encrypt: 
 procedure umlDES(DataPtr: Pointer; Size: Cardinal; const Key: umlString; Encrypt: Boolean); overload;
 procedure umlDES(Input, Output: TMixedStream; const Key: TDESKey; Encrypt: Boolean); overload;
 procedure umlDES(Input, Output: TMixedStream; const Key: umlString; Encrypt: Boolean); overload;
-procedure umlFastDES(DataPtr: Pointer; Size: Cardinal; const Key: TDESKey; Encrypt: Boolean); overload; inline;
-procedure umlFastDES(DataPtr: Pointer; Size: Cardinal; const Key: umlString; Encrypt: Boolean); overload; inline;
 function umlDESCompare(const d1, d2: TDESKey): Boolean; inline;
+
+procedure umlFastSymbol(DataPtr: Pointer; Size: Cardinal; const Key: TDESKey; Encrypt: Boolean); overload; inline;
+procedure umlFastSymbol(DataPtr: Pointer; Size: Cardinal; const Key: umlString; Encrypt: Boolean); overload; inline;
 
 function umlTrimSpace(S: umlString): umlString;
 
@@ -3012,6 +3017,14 @@ begin
     end;
 end;
 
+procedure umlBase64EncodeBytes(var Sour: TBytes; var Dest: umlString);
+var
+  buff: TBytes;
+begin
+  umlBase64EncodeBytes(Sour, buff);
+  Dest.Bytes := buff;
+end;
+
 procedure umlBase64DecodeBytes(var Sour, Dest: TBytes);
 var
   ByteBuffer, ByteBufferSpace: NativeInt;
@@ -3027,6 +3040,14 @@ begin
       Inc(l, umlBase64DecodePartialEnd(Pointer(NativeUInt(@Dest[0]) + l), ByteBuffer, ByteBufferSpace));
       SetLength(Dest, l);
     end;
+end;
+
+procedure umlBase64DecodeBytes(Sour: umlString; var Dest: TBytes);
+var
+  buff: TBytes;
+begin
+  buff := Sour.Bytes;
+  umlBase64DecodeBytes(buff, Dest);
 end;
 
 procedure umlDecodeLineBASE64(Buffer: umlString; var Output: umlString);
@@ -3703,8 +3724,8 @@ begin
   Result.Len := 32;
   for i := 0 to 15 do
     begin
-      Result.Buff[i * 2] := HexArr[(md5[i] shr 4) and $0F];
-      Result.Buff[i * 2 + 1] := HexArr[md5[i] and $0F];
+      Result.buff[i * 2] := HexArr[(md5[i] shr 4) and $0F];
+      Result.buff[i * 2 + 1] := HexArr[md5[i] and $0F];
     end;
 end;
 
@@ -4291,7 +4312,7 @@ procedure umlDES(Input, Output: TMixedStream; const Key: TDESKey; Encrypt: Boole
 const
   bufflen = 1024 * 1024;
 var
-  Buff: array of Byte;
+  buff: array of Byte;
 
   procedure FillBuff(Size: Cardinal);
   var
@@ -4300,7 +4321,7 @@ var
     P := 0;
 
     repeat
-      umlDES(PDESKey(@Buff[P])^, PDESKey(@Buff[P])^, Key, Encrypt);
+      umlDES(PDESKey(@buff[P])^, PDESKey(@buff[P])^, Key, Encrypt);
       P := P + 8;
     until P + 8 > Size;
   end;
@@ -4309,7 +4330,7 @@ var
   l      : Cardinal;
   P, Size: Int64;
 begin
-  SetLength(Buff, bufflen);
+  SetLength(buff, bufflen);
   Input.Position := 0;
   P := 0;
   l := bufflen;
@@ -4323,16 +4344,16 @@ begin
 
       while P + bufflen < Size do
         begin
-          Input.Read(Buff[0], l);
+          Input.Read(buff[0], l);
           FillBuff(l);
-          Output.Write(Buff[0], l);
+          Output.Write(buff[0], l);
           P := P + l;
         end;
 
       l := Size - P;
-      Input.Read(Buff[0], l);
+      Input.Read(buff[0], l);
       FillBuff(l);
-      Output.Write(Buff[0], l);
+      Output.Write(buff[0], l);
     end
   else
     begin
@@ -4342,16 +4363,16 @@ begin
 
       while P + bufflen < Size do
         begin
-          Input.Read(Buff[0], l);
+          Input.Read(buff[0], l);
           FillBuff(l);
-          Output.Write(Buff[0], l);
+          Output.Write(buff[0], l);
           P := P + l;
         end;
 
       l := Size - P;
-      Input.Read(Buff[0], l);
+      Input.Read(buff[0], l);
       FillBuff(l);
-      Output.Write(Buff[0], l);
+      Output.Write(buff[0], l);
     end;
 end;
 
@@ -4363,7 +4384,12 @@ begin
   umlDES(Input, Output, PDESKey(@h64)^, Encrypt);
 end;
 
-procedure umlFastDES(DataPtr: Pointer; Size: Cardinal; const Key: TDESKey; Encrypt: Boolean);
+function umlDESCompare(const d1, d2: TDESKey): Boolean;
+begin
+  Result := PUInt64(@d1[0])^ = PUInt64(@d2[0])^;
+end;
+
+procedure umlFastSymbol(DataPtr: Pointer; Size: Cardinal; const Key: TDESKey; Encrypt: Boolean);
 var
   P: NativeUInt;
   i: Integer;
@@ -4384,17 +4410,12 @@ begin
     end;
 end;
 
-procedure umlFastDES(DataPtr: Pointer; Size: Cardinal; const Key: umlString; Encrypt: Boolean);
+procedure umlFastSymbol(DataPtr: Pointer; Size: Cardinal; const Key: umlString; Encrypt: Boolean);
 var
   h64: THash64;
 begin
   h64 := FastHash64PascalString(@Key);
-  umlFastDES(DataPtr, Size, PDESKey(@h64)^, Encrypt);
-end;
-
-function umlDESCompare(const d1, d2: TDESKey): Boolean;
-begin
-  Result := PUInt64(@d1[0])^ = PUInt64(@d2[0])^;
+  umlFastSymbol(DataPtr, Size, PDESKey(@h64)^, Encrypt);
 end;
 
 function umlTrimSpace(S: umlString): umlString;
