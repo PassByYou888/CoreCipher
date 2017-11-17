@@ -1161,6 +1161,19 @@ class procedure TCipher.GenerateHashByte(hs: THashStyle; sour: Pointer; Size: na
 var
   swBuff: TBytes;
 begin
+  if Size <= 0 then
+    begin
+      SetLength(Output, 0);
+      exit;
+    end;
+
+  if Size < 6 then
+    begin
+      SetLength(Output, 16);
+      PMD5(@Output[0])^ := umlMD5(PByte(sour), Size);
+      exit;
+    end;
+
   case hs of
     hsNone:
       begin
@@ -3157,10 +3170,19 @@ begin
   IDEOutput := True;
 
   DoStatus('Generate and verify password test');
-  s := GeneratePasswordHash(TCipher.CAllHash, 'hello world');
-  if not ComparePasswordHash('hello world', s) then
+
+  DoStatus('verify short password');
+  s := GeneratePasswordHash(TCipher.CAllHash, '1');
+  if not ComparePasswordHash('1', s) then
       DoStatus('PasswordHash failed!');
-  if ComparePasswordHash('hello_world', s) then
+  if ComparePasswordHash('11', s) then
+      DoStatus('PasswordHash failed!');
+
+  DoStatus('verify long password');
+  s := GeneratePasswordHash(TCipher.CAllHash, 'hello world 123456');
+  if not ComparePasswordHash('hello world 123456', s) then
+      DoStatus('PasswordHash failed!');
+  if ComparePasswordHash('111 hello world 123456', s) then
       DoStatus('PasswordHash failed!');
 
   DoStatus('verify full chiher style password');
