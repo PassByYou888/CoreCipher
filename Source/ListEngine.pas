@@ -168,6 +168,7 @@ type
     function Exists(Name: string): Boolean; inline;
     procedure CopyFrom(Source: THashVariantList);
     function GetType(Name: string): Word; inline;
+
     function IncValue(Name: string; V: Variant): Variant; overload;
     procedure IncValue(vl: THashVariantList); overload;
 

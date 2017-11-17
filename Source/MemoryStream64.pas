@@ -52,14 +52,14 @@ type
     procedure SetSize(const NewSize: Int64); overload; override;
     procedure SetSize(NewSize: Longint); overload; override;
 
-    function Write64(const Buffer; Count: Int64): Int64;
+    function Write64(const Buffer; Count: Int64): Int64; virtual;
     function WritePtr(const p: Pointer; Count: Int64): Int64;
     function Write(const Buffer; Count: Longint): Longint; overload; override;
 
     {$IFNDEF FPC}
     function Write(const Buffer: TBytes; Offset, Count: Longint): Longint; overload; override;
     {$ENDIF}
-    function Read64(var Buffer; Count: Int64): Int64;
+    function Read64(var Buffer; Count: Int64): Int64; virtual;
     function ReadPtr(const p: Pointer; Count: Int64): Int64;
     function Read(var Buffer; Count: Longint): Longint; overload; override;
 
@@ -70,6 +70,18 @@ type
     property Memory: Pointer read FMemory;
 
     function CopyFrom(const Source: TCoreClassStream; Count: Int64): Int64;
+  end;
+
+  IMemoryStream64WriteTrigger = interface
+    function TriggerWrite64(const Buffer; Count: Int64): Int64;
+  end;
+
+  TMemoryStream64OfWriteTrigger = class(TMemoryStream64)
+  private
+  public
+    Trigger: IMemoryStream64WriteTrigger;
+    constructor Create(ATrigger: IMemoryStream64WriteTrigger);
+    function Write64(const Buffer; Count: Int64): Int64; override;
   end;
 
   {$IFDEF FPC}
@@ -468,6 +480,19 @@ begin
   finally
       SetLength(Buffer, 0);
   end;
+end;
+
+constructor TMemoryStream64OfWriteTrigger.Create(ATrigger: IMemoryStream64WriteTrigger);
+begin
+  inherited Create;
+  Trigger := ATrigger;
+end;
+
+function TMemoryStream64OfWriteTrigger.Write64(const Buffer; Count: Int64): Int64;
+begin
+  Result := inherited Write64(Buffer, Count);
+  if Assigned(Trigger) then
+      Trigger.TriggerWrite64(Buffer, Count);
 end;
 
 {$IFDEF FPC}
