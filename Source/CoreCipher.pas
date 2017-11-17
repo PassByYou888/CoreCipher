@@ -429,8 +429,11 @@ function CompareSequHash(hashData: TCoreClassStream; sour: Pointer; Size: native
 function GeneratePasswordHash(hssArry: THashStyles; passwd: TPascalString): TPascalString;
 function ComparePasswordHash(passwd, hashBuff: TPascalString): Boolean;
 
-function GeneratePassword(const ca: TCipherStyleArray; passwd: TPascalString): TPascalString;
-function ComparePassword(const ca: TCipherStyleArray; passwd, passwdDataSource: TPascalString): Boolean;
+function GeneratePassword(const ca: TCipherStyleArray; passwd: TPascalString): TPascalString; overload;
+function ComparePassword(const ca: TCipherStyleArray; passwd, passwdDataSource: TPascalString): Boolean; overload;
+
+function GeneratePassword(const cs: TCipherStyle; passwd: TPascalString): TPascalString; overload;
+function ComparePassword(const cs: TCipherStyle; passwd, passwdDataSource: TPascalString): Boolean; overload;
 
 procedure TestCoreCipher;
 
@@ -3047,6 +3050,7 @@ begin
   GenerateSequHash(hssArry, @buff[0], length(buff), m64);
   umlEncodeStreamBASE64(m64, Result);
   DisposeObject(m64);
+  Result := '(' + Result + ')';
 end;
 
 function ComparePasswordHash(passwd, hashBuff: TPascalString): Boolean;
@@ -3054,11 +3058,18 @@ var
   buff: TBytes;
   m64 : TMemoryStream64;
 begin
-  buff := passwd.Bytes;
-  m64 := TMemoryStream64.Create;
-  umlDecodeStreamBASE64(hashBuff, m64);
-  Result := CompareSequHash(m64, @buff[0], length(buff));
-  DisposeObject(m64);
+  Result := False;
+  hashBuff := umlTrimSpace(hashBuff);
+  if (hashBuff.Len > 2) and (hashBuff.First = '(') and (hashBuff.Last = ')') then
+    begin
+      hashBuff.DeleteFirst;
+      hashBuff.DeleteLast;
+      buff := passwd.Bytes;
+      m64 := TMemoryStream64.Create;
+      umlDecodeStreamBASE64(hashBuff, m64);
+      Result := CompareSequHash(m64, @buff[0], length(buff));
+      DisposeObject(m64);
+    end;
 end;
 
 function GeneratePassword(const ca: TCipherStyleArray; passwd: TPascalString): TPascalString;
@@ -3066,11 +3077,13 @@ var
   KeyBuff: TBytes;
   buff   : TBytes;
   m64    : TMemoryStream64;
+  n      : string;
 begin
   KeyBuff := passwd.Bytes;
   buff := passwd.Bytes;
   SequEncryptCBC(ca, @buff[0], length(buff), KeyBuff, True, False);
   umlBase64EncodeBytes(buff, Result);
+  Result := '(' + Result + ')';
 end;
 
 function ComparePassword(const ca: TCipherStyleArray; passwd, passwdDataSource: TPascalString): Boolean;
@@ -3078,10 +3091,48 @@ var
   refBuff: TBytes;
   KeyBuff: TBytes;
 begin
-  umlBase64DecodeBytes(passwdDataSource, refBuff);
+  Result := False;
+  passwdDataSource := umlTrimSpace(passwdDataSource);
+  if (passwdDataSource.Len > 2) and (passwdDataSource.First = '(') and (passwdDataSource.Last = ')') then
+    begin
+      passwdDataSource.DeleteFirst;
+      passwdDataSource.DeleteLast;
+      umlBase64DecodeBytes(passwdDataSource, refBuff);
+      KeyBuff := passwd.Bytes;
+      SequEncryptCBC(ca, @refBuff[0], length(refBuff), KeyBuff, False, False);
+      Result := TCipher.CompareKey(refBuff, KeyBuff);
+    end;
+end;
+
+function GeneratePassword(const cs: TCipherStyle; passwd: TPascalString): TPascalString; overload;
+var
+  KeyBuff: TBytes;
+  buff   : TBytes;
+  m64    : TMemoryStream64;
+begin
   KeyBuff := passwd.Bytes;
-  SequEncryptCBC(ca, @refBuff[0], length(refBuff), KeyBuff, False, False);
-  Result := TCipher.CompareKey(refBuff, KeyBuff);
+  buff := passwd.Bytes;
+  SequEncryptCBC(cs, @buff[0], length(buff), KeyBuff, True, False);
+  umlBase64EncodeBytes(buff, Result);
+  Result := '(' + Result + ')';
+end;
+
+function ComparePassword(const cs: TCipherStyle; passwd, passwdDataSource: TPascalString): Boolean; overload;
+var
+  refBuff: TBytes;
+  KeyBuff: TBytes;
+begin
+  Result := False;
+  passwdDataSource := umlTrimSpace(passwdDataSource);
+  if (passwdDataSource.Len > 2) and (passwdDataSource.First = '(') and (passwdDataSource.Last = ')') then
+    begin
+      passwdDataSource.DeleteFirst;
+      passwdDataSource.DeleteLast;
+      umlBase64DecodeBytes(passwdDataSource, refBuff);
+      KeyBuff := passwd.Bytes;
+      SequEncryptCBC(cs, @refBuff[0], length(refBuff), KeyBuff, False, False);
+      Result := TCipher.CompareKey(refBuff, KeyBuff);
+    end;
 end;
 
 procedure TestCoreCipher;
@@ -3112,11 +3163,22 @@ begin
   if ComparePasswordHash('hello_world', s) then
       DoStatus('PasswordHash failed!');
 
+  DoStatus('verify full chiher style password');
   s := GeneratePassword(TCipher.AllCipher, 'hello world');
   if not ComparePassword(TCipher.AllCipher, 'hello world', s) then
-      DoStatus('Password cipher test failed! cipher: %s', [GetEnumName(TypeInfo(TCipherStyle), Integer(cs))]);
+      DoStatus('Password cipher test failed! cipher: %s', []);
   if ComparePassword(TCipher.AllCipher, 'hello_world', s) then
-      DoStatus('Password cipher test failed! cipher: %s', [GetEnumName(TypeInfo(TCipherStyle), Integer(cs))]);
+      DoStatus('Password cipher test failed! cipher: %s', []);
+
+  for cs in TCipher.AllCipher do
+    begin
+      DoStatus('verify %s chiher style password', [GetEnumName(TypeInfo(TCipherStyle), Integer(cs))]);
+      s := GeneratePassword(TCipher.AllCipher, 'hello world');
+      if not ComparePassword(TCipher.AllCipher, 'hello world', s) then
+          DoStatus('Password cipher test failed! cipher: %s', [GetEnumName(TypeInfo(TCipherStyle), Integer(cs))]);
+      if ComparePassword(TCipher.AllCipher, 'hello_world', s) then
+          DoStatus('Password cipher test failed! cipher: %s', [GetEnumName(TypeInfo(TCipherStyle), Integer(cs))]);
+    end;
 
   // hash and Sequence Encrypt
   SetLength(buffer, 1024 * 1024);
@@ -3126,7 +3188,7 @@ begin
 
   DoStatus('Generate Sequence Hash');
   GenerateSequHash(TCipher.CAllHash, @buffer[0], length(buffer), ps);
-  DoStatus(ps.Text);
+  // DoStatus(ps.Text);
 
   if not CompareSequHash(ps, @buffer[0], length(buffer)) then
       DoStatus('hash compare failed!');
