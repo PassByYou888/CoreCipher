@@ -3180,7 +3180,6 @@ var
   KeyBuff: TBytes;
   buff   : TBytes;
   m64    : TMemoryStream64;
-  n      : SystemString;
 begin
   KeyBuff := passwd.Bytes;
   buff := passwd.Bytes;
@@ -3288,9 +3287,9 @@ begin
   DoStatus('verify full chiher style password');
   s := GeneratePassword(TCipher.AllCipher, 'hello world');
   if not ComparePassword(TCipher.AllCipher, 'hello world', s) then
-      DoStatus('Password cipher test failed! cipher: %s', []);
+      DoStatus('Password cipher test failed! cipher: %s', ['']);
   if ComparePassword(TCipher.AllCipher, 'hello_world', s) then
-      DoStatus('Password cipher test failed! cipher: %s', []);
+      DoStatus('Password cipher test failed! cipher: %s', ['']);
 
   for cs in TCipher.AllCipher do
     begin
