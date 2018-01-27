@@ -1,8 +1,54 @@
+{$WARNINGS OFF}
+{$HINTS OFF}
+{$H+} { long string }
+{$R-} { range check }
+{$A+} { Word Align Data }
+
+{$DEFINE parallel}
+{$DEFINE FastMD5}
+{$DEFINE OptimizationMemoryStreamMD5}
+
+(*
+  {$IFDEF FPC}
+  {$ELSE}
+  {$ENDIF}
+
+  {$IFNDEF FPC}
+  {$ENDIF}
+*)
+
+{$IFDEF release}
+{$DEFINE INLINE_ASM}
+{$ELSE}
+{$UNDEF INLINE_ASM}
+{$ENDIF}
+
+{$UNDEF CPU64}
+{$IFDEF CPU64BITS}
+{$DEFINE CPU64}
+{$ELSE}
+{$IFDEF CPUX64}
+{$DEFINE CPU64}
+{$ENDIF}
+{$ENDIF}
+{$IFNDEF CPU64}
+{$DEFINE CPU32}
+{$ENDIF}
+
 {$IFDEF FPC}
 
 {$MODE objfpc}
 {$MODESWITCH AdvancedRecords}
 {$NOTES OFF}
+
+{$ASMMODE intel}
+
+{$IFDEF FPC_BIG_ENDIAN}
+{$DEFINE BIG_ENDIAN}
+{$ENDIF}
+
+{$UNDEF Delphi}
+{$UNDEF FastMD5}
 
 {$ELSE}
 
@@ -16,11 +62,6 @@
 {$DEFINE FirstCharInZero}
 {$ENDIF}
 
+{$DEFINE Delphi}
+
 {$ENDIF}
-
-{$WARNINGS OFF}
-{$HINTS OFF}
-{$H+} {long string}
-{$R-} {range check}
-{$A+} {Word Align Data}
-

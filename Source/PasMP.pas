@@ -366,9 +366,11 @@ unit PasMP;
   {$undef PasMPPThreadSpinLock}
   {$undef PasMPPThreadBarrier}
   {$undef unix}
+  {$undef PasMPHaveFPUControls}
 {$else}
  {$undef PasMPPThreadSpinLock}
  {$undef PasMPPThreadBarrier}
+  {$undef unix}
 {$ifend}
 
 {$ifdef PasMPUseAsStrictSingletonInstance}

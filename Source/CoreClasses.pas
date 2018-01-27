@@ -1,18 +1,24 @@
 {******************************************************************************}
 {* Core class library  written by QQ 600585@qq.com                            *}
 {* https://github.com/PassByYou888/CoreCipher                                 *}
+(* https://github.com/PassByYou888/ZServer4D                                  *)
 {******************************************************************************}
+
+(*
+  update history
+  2017-12-6
+  timetick
+*)
 
 unit CoreClasses;
 
-interface
-
 {$I zDefine.inc}
 
-uses SysUtils, Classes, Types
+interface
 
+uses SysUtils, Classes, Types, PascalStrings
   {$IFDEF FPC}
-    , Contnrs
+    , Contnrs, fgl
   {$ELSE}
   , System.Generics.Collections
   {$ENDIF}
@@ -27,13 +33,15 @@ const
   fmOpenRead      = SysUtils.fmOpenRead;
   fmOpenWrite     = SysUtils.fmOpenWrite;
   fmOpenReadWrite = SysUtils.fmOpenReadWrite;
-  //fmExclusive     = SysUtils.fmExclusive;
 
   fmShareExclusive = SysUtils.fmShareExclusive;
   fmShareDenyWrite = SysUtils.fmShareDenyWrite;
   fmShareDenyNone  = SysUtils.fmShareDenyNone;
 
 type
+  TTimeTickValue = Cardinal;
+  TTimeTick      = TTimeTickValue;
+
   TSeekOrigin = Classes.TSeekOrigin;
   TNotify     = Classes.TNotifyEvent;
 
@@ -127,7 +135,7 @@ type
 
   {$ENDIF}
 
-  TExecutePlatform = (epWin32, epWin64, epOSX, epIOS, epIOSSIM, epANDROID, epUnknow);
+  TExecutePlatform = (epWin32, epWin64, epOSX, epIOS, epIOSSIM, epANDROID, epLinux64, epUnknow);
 
 const
   {$IF Defined(WIN32)}
@@ -144,6 +152,8 @@ const
   {$ENDIF}
   {$ELSEIF Defined(ANDROID)}
   CurrentPlatform = TExecutePlatform.epANDROID;
+  {$ELSEIF Defined(Linux)}
+  CurrentPlatform = TExecutePlatform.epLinux64;
   {$ELSE}
   CurrentPlatform = TExecutePlatform.epUnknow;
   {$IFEND}
@@ -151,22 +161,28 @@ const
 procedure EmptyProc;
 procedure Empty;
 
-procedure DisposeObject(const obj: TObject); overload;
+procedure DisposeObject(const obj: TObject); overload; {$IFDEF INLINE_ASM} inline; {$ENDIF}
 procedure DisposeObject(const objs: array of TObject); overload;
-procedure FreeObject(const obj: TObject); overload;
+procedure FreeObject(const obj: TObject); overload; {$IFDEF INLINE_ASM} inline; {$ENDIF}
 procedure FreeObject(const objs: array of TObject); overload;
 
-procedure LockObject(obj:TObject); inline;
-procedure UnLockObject(obj:TObject); inline;
+procedure LockObject(obj:TObject); {$IFDEF INLINE_ASM} inline; {$ENDIF}
+procedure UnLockObject(obj:TObject); {$IFDEF INLINE_ASM} inline; {$ENDIF}
 
-procedure FillByte(var Dest; Count: NativeUInt; const Value: Byte);
-function CompareMemory(P1, P2: Pointer; MLen: NativeUInt): Boolean;
+procedure FillPtrByte(Dest:Pointer; Count: NativeUInt; const Value: Byte); {$IFDEF INLINE_ASM} inline; {$ENDIF}
+function CompareMemory(P1, P2: Pointer; MLen: NativeUInt): Boolean; {$IFDEF INLINE_ASM} inline; {$ENDIF}
+procedure CopyPtr(sour, dest:Pointer; Count: NativeUInt); {$IFDEF INLINE_ASM} inline; {$ENDIF}
 
-procedure RaiseInfo(n: string); overload;
-procedure RaiseInfo(n: string; const Args: array of const); overload;
+procedure RaiseInfo(n: SystemString); overload;
+procedure RaiseInfo(n: SystemString; const Args: array of const); overload;
 
 function IsMobile: Boolean;
 
+function GetTimeTickCount: TTimeTickValue; {$IFDEF INLINE_ASM} inline; {$ENDIF}
+function GetTimeTick: TTimeTickValue; {$IFDEF INLINE_ASM} inline; {$ENDIF}
+function GetCrashTimeTick: TTimeTickValue;
+
+threadvar MHGlobalHookEnabled: Boolean;
 
 implementation
 
@@ -240,14 +256,14 @@ begin
 {$ENDIF}
 end;
 
-procedure FillByte(var Dest; Count: NativeUInt; const Value: Byte);
+procedure FillPtrByte(Dest:Pointer; Count: NativeUInt; const Value: Byte);
 var
   Index: NativeUInt;
   V    : UInt64;
   PB   : PByte;
   Total: NativeUInt;
 begin
-  PB := PByte(@Dest);
+  PB := Dest;
 
   if Count >= 8 then
     begin
@@ -280,12 +296,17 @@ begin;
   else Result:=CompareMem(p1,p2, MLen);
 end;
 
-procedure RaiseInfo(n: string);
+procedure CopyPtr(sour, dest:Pointer; Count: NativeUInt);
+begin
+  move(sour^, dest^, Count);
+end;
+
+procedure RaiseInfo(n: SystemString);
 begin
   raise Exception.Create(n);
 end;
 
-procedure RaiseInfo(n: string; const Args: array of const);
+procedure RaiseInfo(n: SystemString; const Args: array of const);
 begin
   raise Exception.Create(Format(n, Args));
 end;
@@ -296,6 +317,21 @@ begin
     epIOS, epIOSSIM, epANDROID: Result := True;
     else Result := False;
   end;
+end;
+
+function GetTimeTickCount: TTimeTickValue;
+begin
+  Result := TCoreClassThread.GetTickCount;
+end;
+
+function GetTimeTick: TTimeTickValue;
+begin
+  Result := TCoreClassThread.GetTickCount;
+end;
+
+function GetCrashTimeTick: TTimeTickValue;
+begin
+  Result:= $FFFFFFFF - GetTimeTick;
 end;
 
 {$IFDEF FPC}
@@ -362,5 +398,9 @@ end;
 
 {$ENDIF}
 
-
+initialization
+  MHGlobalHookEnabled := True;
+finalization
+  MHGlobalHookEnabled := False;
 end.
+

@@ -7,11 +7,11 @@ uses
   CoreClasses in '..\..\Source\CoreClasses.pas',
   DoStatusIO in '..\..\Source\DoStatusIO.pas',
   ListEngine in '..\..\Source\ListEngine.pas',
-  MemoryStream64 in '..\..\Source\MemoryStream64.pas',
-  PascalStrings in '..\..\Source\PascalStrings.pas',
   PasMP in '..\..\Source\PasMP.pas',
-  TextDataEngine in '..\..\Source\TextDataEngine.pas',
-  UnicodeMixedLib in '..\..\Source\UnicodeMixedLib.pas';
+  UnicodeMixedLib in '..\..\Source\UnicodeMixedLib.pas',
+  PascalStrings in '..\..\Source\PascalStrings.pas',
+  MemoryStream64 in '..\..\Source\MemoryStream64.pas',
+  Fast_MD5 in '..\..\Source\Fast_MD5.pas';
 
 {$R *.res}
 

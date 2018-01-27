@@ -1,7 +1,23 @@
 { ****************************************************************************** }
-{ * Core cipher Library ,written by QQ 600585@qq.com                           * }
+{ * Core cipher Library ,writen by QQ 600585@qq.com                            * }
 { * https://github.com/PassByYou888/CoreCipher                                 * }
 { ****************************************************************************** }
+
+(*
+  update history
+  2017-11-26
+  fixed fastMD5,THashMD5 calculate x64 and x86,ARM platform more than 4G memory Support QQ600585
+  change name TMD5Class as TCipherMD5
+  Added global DefaultParallelDepth
+
+  2017-12-6
+  added supported hash elf64
+
+  2017-12-7
+  added System default key
+*)
+
+{ .$define parallel }
 
 unit CoreCipher;
 
@@ -14,7 +30,12 @@ interface
 
 uses
   Types, SysUtils, Math, TypInfo,
+  {$IFDEF parallel}
   PasMP,
+  {$ENDIF}
+  {$IFDEF FastMD5}
+  Fast_MD5,
+  {$ENDIF}
   CoreClasses, UnicodeMixedLib, MemoryStream64, PascalStrings, ListEngine,
   DoStatusIO;
 
@@ -173,7 +194,7 @@ type
 
   { message digest blocks }
   PMD5Digest = ^TMD5Digest;
-  TMD5Digest = array [0 .. 15] of Byte; { 128 bits - MD5 }
+  TMD5Digest = TMD5; { 128 bits - MD5 }
   TMD5Key    = TMD5Digest;
 
   PSHA1Digest = ^TSHA1Digest;
@@ -206,10 +227,6 @@ type
     sdBuf: array [0 .. 63] of Byte;
   end;
 
-var
-  { system default cbc refrence }
-  SystemCBC: TBytes;
-
 type
   { key style and auto Encrypt }
   TCipherStyle = (csNone,
@@ -222,17 +239,17 @@ type
   TCipherKeyStyle   = (cksNone, cksKey64, cks3Key64, cksKey128, cksKey256, cks2IntKey, cksIntKey, ckyDynamicKey);
   PCipherKeyBuffer  = ^TCipherKeyBuffer;
   TCipherKeyBuffer  = TBytes;
-  THashStyle        = (hsNone, hsFastMD5, hsMD5, hsSHA1, hs256, hs128, hs64, hs32, hs16, hsELF, hsMix128, hsCRC16, hsCRC32);
+  THashStyle        = (hsNone, hsFastMD5, hsMD5, hsSHA1, hs256, hs128, hs64, hs32, hs16, hsELF, hsELF64, hsMix128, hsCRC16, hsCRC32);
   THashStyles       = set of THashStyle;
 
 type
   TCipher = class(TCoreClassObject)
   public
     const
-    CAllHash: THashStyles                   = [hsNone, hsFastMD5, hsMD5, hsSHA1, hs256, hs128, hs64, hs32, hs16, hsELF, hsMix128, hsCRC16, hsCRC32];
-    CHashName: array [THashStyle] of string = ('None', 'FastMD5', 'MD5', 'SHA1', '256', '128', '64', '32', '16', 'ELF', 'Mix128', 'CRC16', 'CRC32');
+    CAllHash: THashStyles                         = [hsNone, hsFastMD5, hsMD5, hsSHA1, hs256, hs128, hs64, hs32, hs16, hsELF, hsELF64, hsMix128, hsCRC16, hsCRC32];
+    CHashName: array [THashStyle] of SystemString = ('None', 'FastMD5', 'MD5', 'SHA1', '256', '128', '64', '32', '16', 'ELF', 'ELF64', 'Mix128', 'CRC16', 'CRC32');
 
-    CCipherStyleName: array [TCipherStyle] of string =
+    CCipherStyleName: array [TCipherStyle] of SystemString =
       ('None',
       'DES64', 'DES128', 'DES192',
       'Blowfish', 'LBC', 'LQC', 'RNG32', 'RNG64', 'LSC', 'TwoFish',
@@ -257,13 +274,16 @@ type
   public
     class function AllCipher: TCipherStyleArray;
 
-    class function NameToHashStyle(n: string; var hash: THashStyle): Boolean;
+    class function NameToHashStyle(n: SystemString; var hash: THashStyle): Boolean;
+
+    class function BuffToString(buff: Pointer; Size: nativeInt): TPascalString; overload;
+    class function StringToBuff(const Hex: TPascalString; var Buf; BufSize: Cardinal): Boolean; overload;
 
     class procedure HashToString(hash: Pointer; Size: nativeInt; var Output: TPascalString); overload;
     class procedure HashToString(hash: TSHA1Digest; var Output: TPascalString); overload;
     class procedure HashToString(hash: TMD5Digest; var Output: TPascalString); overload;
     class procedure HashToString(hash: TBytes; var Output: TPascalString); overload;
-    class procedure HashToString(hash: TBytes; var Output: string); overload;
+    class procedure HashToString(hash: TBytes; var Output: SystemString); overload;
 
     class function CompareHash(h1, h2: TSHA1Digest): Boolean; overload;
     class function CompareHash(h1, h2: TMD5Digest): Boolean; overload;
@@ -325,8 +345,7 @@ type
 
     class function GetBytesKey(const KeyBuffPtr: PCipherKeyBuffer; var key: TBytes): Boolean; overload;
 
-    class procedure EncryptTail(TailPtr: Pointer; TailSize: nativeInt); inline;
-
+    class procedure EncryptTail(TailPtr: Pointer; TailSize: nativeInt); {$IFDEF INLINE_ASM}inline; {$ENDIF}
     class function OLDDES(sour: Pointer; Size: nativeInt; KeyBuff: PCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean;
 
     class function DES64(sour: Pointer; Size: nativeInt; KeyBuff: PCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean;
@@ -342,12 +361,13 @@ type
     class function XXTea512(sour: Pointer; Size: nativeInt; KeyBuff: PCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean;
     class function RC6(sour: Pointer; Size: nativeInt; KeyBuff: PCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean;
 
-    class procedure BlockCBC(sour: Pointer; Size: nativeInt; boxBuff: Pointer; boxSiz: nativeInt); inline;
-
+    class procedure BlockCBC(sour: Pointer; Size: nativeInt; boxBuff: Pointer; boxSiz: nativeInt); {$IFDEF INLINE_ASM}inline; {$ENDIF}
     class function EncryptBuffer(cs: TCipherStyle; sour: Pointer; Size: nativeInt; KeyBuff: PCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean;
 
     class function EncryptBufferCBC(cs: TCipherStyle; sour: Pointer; Size: nativeInt; KeyBuff: PCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean;
   end;
+
+  {$IFDEF parallel}
 
   TParallelCipherFunc = procedure(Job, buff, key: Pointer; Size: nativeInt) of object;
 
@@ -403,17 +423,39 @@ type
     function EncryptBufferCBC(cs: TCipherStyle; sour: Pointer; Size: nativeInt; KeyBuff: PCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean;
   end;
 
+  {$ENDIF}
+
+
+var
+  { system default cbc refrence }
+  SystemCBC: TBytes;
+  {$IFDEF parallel}
+  { system default parallel depth }
+  DefaultParallelDepth: Integer = 16;
+  {$ENDIF}
+  { system default key and cipherStyle }
+  DefaultKey        : TCipherKeyBuffer;
+  DefaultCipherStyle: TCipherStyle = TCipherStyle.csBlowfish;
+
+procedure InitSysCBCAndDefaultKey(rand: Int64);
+
 function SequEncryptWithDirect(const cs: TCipherStyle; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean; overload;
 function SequEncryptWithDirect(const ca: TCipherStyleArray; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean; overload;
+{$IFDEF parallel}
 function SequEncryptWithParallel(const cs: TCipherStyle; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean; overload;
 function SequEncryptWithParallel(const ca: TCipherStyleArray; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean; overload;
+{$ENDIF}
+
 function SequEncrypt(const ca: TCipherStyleArray; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean; overload;
 function SequEncrypt(const cs: TCipherStyle; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean; overload;
+function SequEncrypt(sour: Pointer; Size: nativeInt; Encrypt, ProcessTail: Boolean): Boolean; overload;
 
 function SequEncryptCBCWithDirect(const cs: TCipherStyle; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean; overload;
 function SequEncryptCBCWithDirect(const ca: TCipherStyleArray; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean; overload;
+{$IFDEF parallel}
 function SequEncryptCBCWithParallel(const cs: TCipherStyle; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean; overload;
 function SequEncryptCBCWithParallel(const ca: TCipherStyleArray; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean; overload;
+{$ENDIF}
 function SequEncryptCBC(const ca: TCipherStyleArray; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean; overload;
 function SequEncryptCBC(const cs: TCipherStyle; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean; overload;
 
@@ -441,15 +483,15 @@ type
   { Blowfish Cipher }
   TBlowfish = class(TCoreClassObject)
   public
-    class procedure EncryptBF(const Context: TBFContext; var Block: TBFBlock; Encrypt: Boolean); inline;
+    class procedure EncryptBF(const Context: TBFContext; var Block: TBFBlock; Encrypt: Boolean); {$IFDEF INLINE_ASM}inline; {$ENDIF}
     class procedure InitEncryptBF(key: TKey128; var Context: TBFContext);
   end;
 
   { DES Cipher }
   TDES = class(TCoreClassObject)
   strict private
-    class procedure JoinBlock(const L, R: Integer; var Block: TDESBlock); inline;
-    class procedure SplitBlock(const Block: TDESBlock; var L, R: DWord); inline;
+    class procedure JoinBlock(const L, R: Integer; var Block: TDESBlock); {$IFDEF INLINE_ASM}inline; {$ENDIF}
+    class procedure SplitBlock(const Block: TDESBlock; var L, R: DWord); {$IFDEF INLINE_ASM}inline; {$ENDIF}
   private
   public
     class procedure EncryptDES(const Context: TDESContext; var Block: TDESBlock);
@@ -485,14 +527,14 @@ type
   end;
 
   { MD5 Cipher }
-  TMD5Class = class(TCoreClassObject)
+  TCipherMD5 = class(TCoreClassObject)
   public
     class procedure FinalizeMD5(var Context: TMD5Context; var Digest: TMD5Digest);
     class procedure GenerateMD5Key(var key: TKey128; const ABytes: TBytes);
-    class procedure HashMD5(var Digest: TMD5Digest; const Buf; BufSize: Integer);
+    class procedure HashMD5(var Digest: TMD5Digest; const Buf; BufSize: nativeInt);
     class procedure InitMD5(var Context: TMD5Context);
     class procedure ByteBuffHashMD5(var Digest: TMD5Digest; const ABytes: TBytes);
-    class procedure UpdateMD5(var Context: TMD5Context; const Buf; BufSize: Integer);
+    class procedure UpdateMD5(var Context: TMD5Context; const Buf; BufSize: nativeInt);
   end;
 
   { Cipher message digest }
@@ -509,10 +551,10 @@ type
   { Random Number Cipher }
   TRNG = class(TCoreClassObject)
   public
-    class procedure EncryptRNG32(var Context: TRNG32Context; var Buf; BufSize: Integer); inline;
-    class procedure EncryptRNG64(var Context: TRNG64Context; var Buf; BufSize: Integer); inline;
-    class procedure InitEncryptRNG32(key: Integer; var Context: TRNG32Context); inline;
-    class procedure InitEncryptRNG64(KeyHi, KeyLo: Integer; var Context: TRNG64Context); inline;
+    class procedure EncryptRNG32(var Context: TRNG32Context; var Buf; BufSize: Integer); {$IFDEF INLINE_ASM}inline; {$ENDIF}
+    class procedure EncryptRNG64(var Context: TRNG64Context; var Buf; BufSize: Integer); {$IFDEF INLINE_ASM}inline; {$ENDIF}
+    class procedure InitEncryptRNG32(key: Integer; var Context: TRNG32Context); {$IFDEF INLINE_ASM}inline; {$ENDIF}
+    class procedure InitEncryptRNG64(KeyHi, KeyLo: Integer; var Context: TRNG64Context); {$IFDEF INLINE_ASM}inline; {$ENDIF}
   end;
 
   { LSC Stream Cipher }
@@ -527,23 +569,24 @@ type
   { Misc public utilities }
   TMISC = record
   private
-    class procedure Mix128(var X: T128Bit); static; inline;
-    class function Ran0Prim(var Seed: Integer; IA, IQ, IR: Integer): Integer; static; inline;
-    class function Random64(var Seed: TInt64): Integer; static; inline;
-    class procedure Transform(var OutputBuffer: TTransformOutput; var InBuf: TTransformInput); static; inline;
+    class procedure Mix128(var X: T128Bit); static; {$IFDEF INLINE_ASM}inline; {$ENDIF}
+    class function Ran0Prim(var Seed: Integer; IA, IQ, IR: Integer): Integer; static; {$IFDEF INLINE_ASM}inline; {$ENDIF}
+    class function Random64(var Seed: TInt64): Integer; static; {$IFDEF INLINE_ASM}inline; {$ENDIF}
+    class procedure Transform(var OutputBuffer: TTransformOutput; var InBuf: TTransformInput); static; {$IFDEF INLINE_ASM}inline; {$ENDIF}
   public
-    class procedure GenerateRandomKey(var key; KeySize: Integer); static; inline;
-    class procedure HashELF(var Digest: Integer; const Buf; BufSize: nativeUInt); static; inline;
-    class procedure HashMix128(var Digest: Integer; const Buf; BufSize: nativeUInt); static; inline;
-    class function Ran01(var Seed: Integer): Integer; static; inline;
-    class function Ran02(var Seed: Integer): Integer; static; inline;
-    class function Ran03(var Seed: Integer): Integer; static; inline;
-    class function Random32Byte(var Seed: Integer): Byte; static; inline;
-    class function Random64Byte(var Seed: TInt64): Byte; static; inline;
-    class function RolX(i, C: DWord): DWord; static; inline;
-    class procedure ByteBuffHashELF(var Digest: Integer; const ABytes: TBytes); static; inline;
-    class procedure ByteBuffHashMix128(var Digest: Integer; const ABytes: TBytes); static; inline;
-    class procedure XorMem(var Mem1; const Mem2; Count: nativeInt); static; inline;
+    class procedure GenerateRandomKey(var key; KeySize: Integer); static; {$IFDEF INLINE_ASM}inline; {$ENDIF}
+    class procedure HashELF(var Digest: Integer; const Buf; BufSize: nativeUInt); static; {$IFDEF INLINE_ASM}inline; {$ENDIF}
+    class procedure HashELF64(var Digest: Int64; const Buf; BufSize: nativeUInt); static; {$IFDEF INLINE_ASM}inline; {$ENDIF}
+    class procedure HashMix128(var Digest: Integer; const Buf; BufSize: nativeUInt); static; {$IFDEF INLINE_ASM}inline; {$ENDIF}
+    class function Ran01(var Seed: Integer): Integer; static; {$IFDEF INLINE_ASM}inline; {$ENDIF}
+    class function Ran02(var Seed: Integer): Integer; static; {$IFDEF INLINE_ASM}inline; {$ENDIF}
+    class function Ran03(var Seed: Integer): Integer; static; {$IFDEF INLINE_ASM}inline; {$ENDIF}
+    class function Random32Byte(var Seed: Integer): Byte; static; {$IFDEF INLINE_ASM}inline; {$ENDIF}
+    class function Random64Byte(var Seed: TInt64): Byte; static; {$IFDEF INLINE_ASM}inline; {$ENDIF}
+    class function RolX(i, C: DWord): DWord; static; {$IFDEF INLINE_ASM}inline; {$ENDIF}
+    class procedure ByteBuffHashELF(var Digest: Integer; const ABytes: TBytes); static; {$IFDEF INLINE_ASM}inline; {$ENDIF}
+    class procedure ByteBuffHashMix128(var Digest: Integer; const ABytes: TBytes); static; {$IFDEF INLINE_ASM}inline; {$ENDIF}
+    class procedure XorMem(var Mem1; const Mem2; Count: nativeInt); static; {$IFDEF INLINE_ASM}inline; {$ENDIF}
   end;
 
   // Twofish
@@ -570,11 +613,12 @@ type
   end;
 
 procedure DCP_twofish_InitKey(const key; Size: Cardinal; var SubKeys: TDCPTFSubKeys; var SBox: TDCPTFSBox);
-procedure DCP_twofish_EncryptECB(var SubKeys: TDCPTFSubKeys; var SBox: TDCPTFSBox; const InData: T128Bit; var OutData: T128Bit); inline;
-procedure DCP_twofish_DecryptECB(var SubKeys: TDCPTFSubKeys; var SBox: TDCPTFSBox; const InData: T128Bit; var OutData: T128Bit); inline;
+procedure DCP_twofish_EncryptECB(var SubKeys: TDCPTFSubKeys; var SBox: TDCPTFSBox; const InData: T128Bit; var OutData: T128Bit); {$IFDEF INLINE_ASM}inline; {$ENDIF}
+procedure DCP_twofish_DecryptECB(var SubKeys: TDCPTFSubKeys; var SBox: TDCPTFSBox; const InData: T128Bit; var OutData: T128Bit); {$IFDEF INLINE_ASM}inline; {$ENDIF}
 
-procedure XXTEAEncrypt(var key: TKey128; var Block: TXXTEABlock); inline;
-procedure XXTEADecrypt(var key: TKey128; var Block: TXXTEABlock); inline;
+procedure XXTEAEncrypt(var key: TKey128; var Block: TXXTEABlock); {$IFDEF INLINE_ASM}inline; {$ENDIF}
+procedure XXTEADecrypt(var key: TKey128; var Block: TXXTEABlock); {$IFDEF INLINE_ASM}inline; {$ENDIF}
+
 
 const
   cRC6_NumRounds = 20; { number of rounds must be between 16-24 }
@@ -588,17 +632,17 @@ type
 
   TRC6 = class
   public
-    class function LRot32(X, C: DWord): DWord; inline;
-    class function RRot32(X, C: DWord): DWord; inline;
+    class function LRot32(X, C: DWord): DWord; {$IFDEF INLINE_ASM}inline; {$ENDIF}
+    class function RRot32(X, C: DWord): DWord; {$IFDEF INLINE_ASM}inline; {$ENDIF}
     class procedure InitKey(buff: Pointer; Size: Integer; var KeyContext: TRC6Key);
-    class procedure Encrypt(var KeyContext: TRC6Key; var Data: TRC6Block); inline;
-    class procedure Decrypt(var KeyContext: TRC6Key; var Data: TRC6Block); inline;
+    class procedure Encrypt(var KeyContext: TRC6Key; var Data: TRC6Block); {$IFDEF INLINE_ASM}inline; {$ENDIF}
+    class procedure Decrypt(var KeyContext: TRC6Key; var Data: TRC6Block); {$IFDEF INLINE_ASM}inline; {$ENDIF}
   end;
 
 implementation
 
 const
-  SInvalidFileFormat: string = 'Invalid file format';
+  SInvalidFileFormat: SystemString = 'Invalid file format';
 
   { -Blowfish lookup tables }
 
@@ -1066,7 +1110,7 @@ begin
       Result[Integer(cs)] := cs;
 end;
 
-class function TCipher.NameToHashStyle(n: string; var hash: THashStyle): Boolean;
+class function TCipher.NameToHashStyle(n: SystemString; var hash: THashStyle): Boolean;
 var
   h: THashStyle;
 begin
@@ -1078,6 +1122,16 @@ begin
         Result := True;
         exit;
       end;
+end;
+
+class function TCipher.BuffToString(buff: Pointer; Size: nativeInt): TPascalString;
+begin
+  HashToString(buff, Size, Result);
+end;
+
+class function TCipher.StringToBuff(const Hex: TPascalString; var Buf; BufSize: Cardinal): Boolean;
+begin
+  Result := HexToBuffer(Hex, Buf, BufSize);
 end;
 
 class procedure TCipher.HashToString(hash: Pointer; Size: nativeInt; var Output: TPascalString);
@@ -1109,7 +1163,7 @@ begin
   HashToString(@hash[0], length(hash), Output);
 end;
 
-class procedure TCipher.HashToString(hash: TBytes; var Output: string);
+class procedure TCipher.HashToString(hash: TBytes; var Output: SystemString);
 var
   s: TPascalString;
 begin
@@ -1149,7 +1203,11 @@ end;
 
 class function TCipher.GenerateMD5Hash(sour: Pointer; Size: nativeInt): TMD5Digest;
 begin
-  TMD5Class.HashMD5(Result, sour^, Size);
+  {$IF Defined(FastMD5) and (Defined(WIN32) or Defined(WIN64))}
+  Result := FastMD5(sour, Size);
+  {$ELSE}
+  TCipherMD5.HashMD5(Result, sour^, Size);
+  {$IFEND}
 end;
 
 class procedure TCipher.GenerateHash(sour: Pointer; Size: nativeInt; OutHash: Pointer; HashSize: nativeInt);
@@ -1182,12 +1240,12 @@ begin
     hsFastMD5:
       begin
         SetLength(Output, 16);
-        PMD5(@Output[0])^ := umlMD5(PByte(sour), Size);
+        PMD5(@Output[0])^ := umlMD5(PByte(sour), DWord(Size));
       end;
     hsMD5, hs16:
       begin
         SetLength(Output, 16);
-        TMD5Class.HashMD5(PMD5Digest(@Output[0])^, sour^, Size);
+        TCipherMD5.HashMD5(PMD5Digest(@Output[0])^, sour^, Size);
       end;
     hsSHA1:
       begin
@@ -1218,6 +1276,11 @@ begin
       begin
         SetLength(Output, 4);
         TMISC.HashELF(PInteger(@Output[0])^, sour^, Size);
+      end;
+    hsELF64:
+      begin
+        SetLength(Output, 8);
+        TMISC.HashELF64(PInt64(@Output[0])^, sour^, Size);
       end;
     hsMix128:
       begin
@@ -1271,12 +1334,8 @@ begin
 end;
 
 class function TCipher.BufferToHex(const Buf; BufSize: Cardinal): TPascalString;
-var
-  i: Integer;
 begin
-  Result := '';
-  for i := 0 to BufSize - 1 do
-      Result.Append(IntToHex(TByteArray(Buf)[i], 2)); { !!.01 }
+  Result := BuffToString(@Buf, BufSize);
 end;
 
 class function TCipher.HexToBuffer(const Hex: TPascalString; var Buf; BufSize: Cardinal): Boolean;
@@ -1292,7 +1351,7 @@ begin
     if CharIn(cChar, [c0to9, cLoAtoF, cHiAtoF]) then
         filStr.Append(cChar);
 
-  FillByte(Buf, BufSize, 0);
+  FillPtrByte(@Buf, BufSize, 0);
   Count := Min(filStr.Len div 2, BufSize);
 
   for i := 0 to Count - 1 do
@@ -1481,7 +1540,7 @@ begin
   SetLength(Output, umlByteLength + cIntSize + Size);
   Output[0] := Byte(TCipherKeyStyle.ckyDynamicKey);
   PInteger(@Output[1])^ := Size;
-  move(key^, (@Output[1 + cIntSize])^, Size);
+  CopyPtr(key, @Output[1 + cIntSize], Size);
 end;
 
 class procedure TCipher.GenerateKey(cs: TCipherStyle; buffPtr: Pointer; Size: nativeInt; var Output: TCipherKeyBuffer);
@@ -1581,7 +1640,7 @@ begin
       exit;
   siz := PInteger(@KeyBuffPtr^[1])^;
   SetLength(key, siz);
-  move((@KeyBuffPtr^[1 + cIntSize])^, key[0], siz);
+  CopyPtr(@KeyBuffPtr^[1 + cIntSize], @key[0], siz);
 end;
 
 class procedure TCipher.EncryptTail(TailPtr: Pointer; TailSize: nativeInt);
@@ -2033,6 +2092,9 @@ begin
     end;
 end;
 
+{$IFDEF parallel}
+
+
 procedure TParallelCipher.DES64_Parallel(Job, buff, key: Pointer; Size: nativeInt);
 var
   p: nativeUInt;
@@ -2206,7 +2268,7 @@ begin
   inherited Create;
   FakeAtomicOperationMutex := TPasMPMutex.Create;
   ParallelGranularity := 1024;
-  ParallelDepth := 16;
+  ParallelDepth := DefaultParallelDepth;
 end;
 
 destructor TParallelCipher.Destroy;
@@ -2759,15 +2821,20 @@ begin
     end;
 end;
 
-procedure InitSysCBC;
+{$ENDIF}
+
+
+procedure InitSysCBCAndDefaultKey(rand: Int64);
 var
   i   : Integer;
   Seed: TInt64;
 begin
-  SetLength(SystemCBC, 128);
-  Seed.i := 0;
-  for i := low(SystemCBC) to high(SystemCBC) do
-      SystemCBC[i] := TMISC.Random64(Seed);
+  SetLength(SystemCBC, 1024 * 1024);
+  Seed.i := rand;
+  for i := 0 to (length(SystemCBC) div 4) - 1 do
+      PInteger(@SystemCBC[i * 4])^ := TMISC.Random64(Seed);
+
+  TCipher.GenerateKey(DefaultCipherStyle, @rand, SizeOf(rand), DefaultKey);
 end;
 
 function SequEncryptWithDirect(const cs: TCipherStyle; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean;
@@ -2796,6 +2863,9 @@ begin
     end;
 end;
 
+{$IFDEF parallel}
+
+
 function SequEncryptWithParallel(const cs: TCipherStyle; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean;
 var
   k       : TCipherKeyBuffer;
@@ -2805,7 +2875,7 @@ begin
 
   Parallel := TParallelCipher.Create;
   Parallel.ParallelGranularity := Size div 64;
-  Parallel.ParallelDepth := 32;
+  Parallel.ParallelDepth := DefaultParallelDepth;
   Result := Parallel.EncryptBuffer(cs, sour, Size, @k, Encrypt, ProcessTail);
   DisposeObject(Parallel);
 end;
@@ -2827,21 +2897,32 @@ begin
           Result := Result and SequEncryptWithParallel(ca[i], sour, Size, key, Encrypt, ProcessTail);
     end;
 end;
+{$ENDIF}
+
 
 function SequEncrypt(const ca: TCipherStyleArray; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean;
 begin
+  {$IFDEF parallel}
   if Size > 1024 then
       Result := SequEncryptWithParallel(ca, sour, Size, key, Encrypt, ProcessTail)
   else
+    {$ENDIF}
       Result := SequEncryptWithDirect(ca, sour, Size, key, Encrypt, ProcessTail);
 end;
 
 function SequEncrypt(const cs: TCipherStyle; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean;
 begin
+  {$IFDEF parallel}
   if Size > 1024 then
       Result := SequEncryptWithParallel(cs, sour, Size, key, Encrypt, ProcessTail)
   else
+    {$ENDIF}
       Result := SequEncryptWithDirect(cs, sour, Size, key, Encrypt, ProcessTail);
+end;
+
+function SequEncrypt(sour: Pointer; Size: nativeInt; Encrypt, ProcessTail: Boolean): Boolean;
+begin
+  Result := SequEncrypt(DefaultCipherStyle, sour, Size, DefaultKey, Encrypt, ProcessTail);
 end;
 
 function SequEncryptCBCWithDirect(const cs: TCipherStyle; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean;
@@ -2870,6 +2951,9 @@ begin
     end;
 end;
 
+{$IFDEF parallel}
+
+
 function SequEncryptCBCWithParallel(const cs: TCipherStyle; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean;
 var
   k       : TCipherKeyBuffer;
@@ -2879,7 +2963,7 @@ begin
 
   Parallel := TParallelCipher.Create;
   Parallel.ParallelGranularity := Size div 64;
-  Parallel.ParallelDepth := 32;
+  Parallel.ParallelDepth := DefaultParallelDepth;
   Result := Parallel.EncryptBufferCBC(cs, sour, Size, @k, Encrypt, ProcessTail);
   DisposeObject(Parallel);
 end;
@@ -2901,20 +2985,26 @@ begin
           Result := Result and SequEncryptCBCWithParallel(ca[i], sour, Size, key, Encrypt, ProcessTail);
     end;
 end;
+{$ENDIF}
+
 
 function SequEncryptCBC(const ca: TCipherStyleArray; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean;
 begin
+  {$IFDEF parallel}
   if Size > 1024 then
       Result := SequEncryptCBCWithParallel(ca, sour, Size, key, Encrypt, ProcessTail)
   else
+    {$ENDIF}
       Result := SequEncryptCBCWithDirect(ca, sour, Size, key, Encrypt, ProcessTail);
 end;
 
 function SequEncryptCBC(const cs: TCipherStyle; sour: Pointer; Size: nativeInt; var key: TBytes; Encrypt, ProcessTail: Boolean): Boolean;
 begin
+  {$IFDEF parallel}
   if Size > 1024 then
       Result := SequEncryptCBCWithParallel(cs, sour, Size, key, Encrypt, ProcessTail)
   else
+    {$ENDIF}
       Result := SequEncryptCBCWithDirect(cs, sour, Size, key, Encrypt, ProcessTail);
 end;
 
@@ -2923,7 +3013,7 @@ var
   h    : THashStyle;
   vl   : THashVariantList;
   hBuff: TBytes;
-  n    : string;
+  n    : SystemString;
 begin
   vl := THashVariantList.Create;
   for h in hssArry do
@@ -2944,7 +3034,7 @@ var
   h    : THashStyle;
   vl   : THashVariantList;
   hBuff: TBytes;
-  n    : string;
+  n    : SystemString;
 begin
   vl := THashVariantList.Create;
   for h in hssArry do
@@ -2965,7 +3055,7 @@ var
   h    : THashStyle;
   vl   : THashVariantList;
   hBuff: TBytes;
-  n    : string;
+  n    : SystemString;
 begin
   vl := THashVariantList.Create;
   for h in hssArry do
@@ -2986,7 +3076,7 @@ var
   ns                : TListString;
   i                 : Integer;
   sourHash, destHash: TBytes;
-  hName             : string;
+  hName             : SystemString;
   hValue            : TPascalString;
   h                 : THashStyle;
 begin
@@ -3090,7 +3180,7 @@ var
   KeyBuff: TBytes;
   buff   : TBytes;
   m64    : TMemoryStream64;
-  n      : string;
+  n      : SystemString;
 begin
   KeyBuff := passwd.Bytes;
   buff := passwd.Bytes;
@@ -3161,12 +3251,22 @@ var
   hs   : THashStyle;
   hByte: TBytes;
 
+  {$IFDEF parallel}
   Parallel: TParallelCipher;
-
+  {$ENDIF}
   ps: TCoreClassStrings;
 
   s: TPascalString;
 begin
+  sour := TMemoryStream64.Create;
+  sour.Size := Int64(1024 * 1024 + 9);
+
+  FillPtrByte(sour.Memory, sour.Size, $7F);
+  DoStatus(umlStreamMD5String(sour).Text);
+  DoStatus(umlMD5String(sour.Memory, sour.Size).Text);
+
+  DisposeObject(sour);
+
   IDEOutput := True;
 
   DoStatus('Generate and verify password test');
@@ -3204,7 +3304,7 @@ begin
 
   // hash and Sequence Encrypt
   SetLength(buffer, 1024 * 1024);
-  FillByte(buffer[0], length(buffer), 99);
+  FillPtrByte(@buffer[0], length(buffer), 99);
 
   ps := TCoreClassStringList.Create;
 
@@ -3227,8 +3327,8 @@ begin
       DoStatus('hash compare failed!');
 
   // cipher Encrypt performance
-  SetLength(buffer, 1024 * 1024 * 8 + 99);
-  FillByte(buffer[0], length(buffer), $7F);
+  SetLength(buffer, 1024 * 1024 + 99);
+  FillPtrByte(@buffer[0], length(buffer), $7F);
 
   sour := TMemoryStream64.Create;
   dest := TMemoryStream64.Create;
@@ -3242,6 +3342,7 @@ begin
 
   sourHash := TCipher.GenerateSha1Hash(sour.Memory, sour.Size);
 
+  {$IFDEF parallel}
   DoStatus(#13#10'Parallel cipher performance test');
 
   for cs in TCipher.AllCipher do
@@ -3256,20 +3357,20 @@ begin
       sour.Position := 0;
       dest.Position := 0;
 
-      d := TCoreClassThread.GetTickCount;
+      d := GetTimeTick;
 
       if not Parallel.EncryptBufferCBC(cs, dest.Memory, dest.Size, @k, True, True) then
           DoStatus('%s: parallel encode failed', [GetEnumName(TypeInfo(TCipherStyle), Integer(cs))]);
       if not Parallel.EncryptBufferCBC(cs, dest.Memory, dest.Size, @k, False, True) then
           DoStatus('%s: parallel decode failed', [GetEnumName(TypeInfo(TCipherStyle), Integer(cs))]);
-      DoStatus('%s - parallel performance:%dms', [GetEnumName(TypeInfo(TCipherStyle), Integer(cs)), TCoreClassThread.GetTickCount - d]);
+      DoStatus('%s - parallel performance:%dms', [GetEnumName(TypeInfo(TCipherStyle), Integer(cs)), GetTimeTick - d]);
 
       if not TCipher.CompareHash(TCipher.GenerateSha1Hash(dest.Memory, dest.Size), sourHash) then
           DoStatus('%s parallel hash error!', [GetEnumName(TypeInfo(TCipherStyle), Integer(cs))]);
 
       DisposeObject(Parallel);
     end;
-
+  {$ENDIF}
   DoStatus(#13#10'normal cipher performance test');
 
   for cs in TCipher.AllCipher do
@@ -3282,12 +3383,12 @@ begin
       sour.Position := 0;
       dest.Position := 0;
 
-      d := TCoreClassThread.GetTickCount;
+      d := GetTimeTick;
       if not TCipher.EncryptBufferCBC(cs, dest.Memory, dest.Size, @k, True, True) then
           DoStatus('%s: encode failed', [GetEnumName(TypeInfo(TCipherStyle), Integer(cs))]);
       if not TCipher.EncryptBufferCBC(cs, dest.Memory, dest.Size, @k, False, True) then
           DoStatus('%s: decode failed', [GetEnumName(TypeInfo(TCipherStyle), Integer(cs))]);
-      DoStatus('%s - normal performance:%dms', [GetEnumName(TypeInfo(TCipherStyle), Integer(cs)), TCoreClassThread.GetTickCount - d]);
+      DoStatus('%s - normal performance:%dms', [GetEnumName(TypeInfo(TCipherStyle), Integer(cs)), GetTimeTick - d]);
       if not TCipher.CompareHash(TCipher.GenerateSha1Hash(dest.Memory, dest.Size), sourHash) then
           DoStatus('%s hash error!', [GetEnumName(TypeInfo(TCipherStyle), Integer(cs))]);
     end;
@@ -3302,9 +3403,9 @@ begin
 
   for hs := low(THashStyle) to high(THashStyle) do
     begin
-      d := TCoreClassThread.GetTickCount;
+      d := GetTimeTick;
       TCipher.GenerateHashByte(hs, dest.Memory, dest.Size, hByte);
-      DoStatus('%s - performance:%dms', [GetEnumName(TypeInfo(THashStyle), Integer(hs)), Round((TCoreClassThread.GetTickCount - d))]);
+      DoStatus('%s - performance:%dms', [GetEnumName(TypeInfo(THashStyle), Integer(hs)), Round((GetTimeTick - d))]);
     end;
 
   DoStatus(#13#10'all test done!');
@@ -3318,7 +3419,7 @@ var
   i       : Integer;
   TmpBlock: TBFBlockEx; { !!.01 }
 begin
-  move(Block, TmpBlock, SizeOf(TmpBlock)); { !!.01 }
+  CopyPtr(@Block, @TmpBlock, SizeOf(TmpBlock)); { !!.01 }
   if Encrypt then begin
       Block[0] := Block[0] xor Context.PBox[0];
 
@@ -3366,9 +3467,9 @@ var
   Block: TBFBlock;
 begin
   { initialize PArray }
-  move(bf_P, Context.PBox, SizeOf(Context.PBox));
+  CopyPtr(@bf_P, @Context.PBox, SizeOf(Context.PBox));
   { initialize SBox }
-  move(bf_S, Context.SBox, SizeOf(Context.SBox));
+  CopyPtr(@bf_S, @Context.SBox, SizeOf(Context.SBox));
 
   { update PArray with the key bits }
   J := 0;
@@ -3383,7 +3484,7 @@ begin
       Context.PBox[i] := Context.PBox[i] xor Data;
     end;
 
-  { encrypt an all-zero string using the Blowfish algorithm and }
+  { encrypt an all-zero SystemString using the Blowfish algorithm and }
   { replace the elements of the P-array with the output of this process }
 
   Block[0] := 0;
@@ -3636,7 +3737,7 @@ begin
         end;
 
       { select bits individually }
-      FillByte(KS, SizeOf(KS), 0);
+      FillPtrByte(@KS, SizeOf(KS), 0);
       for J := 0 to 47 do
         if Boolean(PC1R[PC2[J]]) then begin
             L := J div 6;
@@ -3665,7 +3766,7 @@ class procedure TDES.InitEncryptTripleDES(const key: TKey128; var Context: TTrip
 var
   KeyArray: array [0 .. 1] of TKey64;
 begin
-  move(key, KeyArray, SizeOf(KeyArray)); { !!.01 }
+  CopyPtr(@key, @KeyArray, SizeOf(KeyArray)); { !!.01 }
   if Encrypt then begin
       InitEncryptDES(KeyArray[0], Context[0], True);
       InitEncryptDES(KeyArray[1], Context[1], False);
@@ -3766,7 +3867,7 @@ begin
       sdHash[3] := SHA1SwapByteOrder(sdHash[3]);
       sdHash[4] := SHA1SwapByteOrder(sdHash[4]);
 
-      move(sdHash, Digest, SizeOf(Digest));
+      CopyPtr(@sdHash, @Digest, SizeOf(Digest));
       SHA1Clear(Context);
     end;
 end;
@@ -3792,7 +3893,7 @@ end;
 
 class procedure TSHA1.SHA1Clear(var Context: TSHA1Context);
 begin
-  FillByte(Context, SizeOf(Context), $00);
+  FillPtrByte(@Context, SizeOf(Context), $00);
 end;
 
 class procedure TSHA1.SHA1Hash(var Context: TSHA1Context);
@@ -3810,7 +3911,7 @@ var
 begin
   with Context do begin
       sdIndex := 0;
-      move(sdBuf, W, SizeOf(W));
+      CopyPtr(@sdBuf, @W, SizeOf(W));
 
       // W := Mt, for t = 0 to 15 : Mt is M sub t
       for i := 0 to 15 do
@@ -3871,8 +3972,8 @@ begin
       sdHash[3] := sdHash[3] + d;
       sdHash[4] := sdHash[4] + E;
 
-      FillByte(W, SizeOf(W), $00);
-      FillByte(sdBuf, SizeOf(sdBuf), $00);
+      FillPtrByte(@W, SizeOf(W), $00);
+      FillPtrByte(@sdBuf, SizeOf(sdBuf), $00);
     end;
 end;
 
@@ -3904,13 +4005,13 @@ begin
       PBuf := @Buf;
       while BufSize > 0 do begin
           if (SizeOf(sdBuf) - sdIndex) <= DWord(BufSize) then begin
-              move(PBuf^, sdBuf[sdIndex], SizeOf(sdBuf) - sdIndex);
+              CopyPtr(PBuf, @sdBuf[sdIndex], SizeOf(sdBuf) - sdIndex);
               dec(BufSize, SizeOf(sdBuf) - sdIndex);
               inc(PBuf, SizeOf(sdBuf) - sdIndex);
               SHA1Hash(Context);
             end
           else begin
-              move(PBuf^, sdBuf[sdIndex], BufSize);
+              CopyPtr(PBuf, @sdBuf[sdIndex], BufSize);
               inc(sdIndex, BufSize);
               BufSize := 0;
             end;
@@ -3930,7 +4031,7 @@ var
   CC, DD: Integer;
   R, T  : Integer;
 begin
-  move(Block, Blocks, SizeOf(Blocks)); { !!.01 }
+  CopyPtr(@Block, @Blocks, SizeOf(Blocks)); { !!.01 }
   Right := Blocks[0];
   Left := Blocks[1];
 
@@ -4010,7 +4111,7 @@ begin
 
   Blocks[0] := Left;
   Blocks[1] := Right;
-  move(Blocks, Block, SizeOf(Block)); { !!.01 }
+  CopyPtr(@Blocks, @Block, SizeOf(Block)); { !!.01 }
 end;
 
 class procedure TLBC.EncryptLQC(const key: TKey128; var Block: TLQCBlock; Encrypt: Boolean);
@@ -4028,8 +4129,8 @@ var
   AA, BB : Integer;
   CC, DD : Integer;
 begin
-  move(key, KeyInts, SizeOf(KeyInts)); { !!.01 }
-  move(Block, Blocks, SizeOf(Blocks)); { !!.01 }
+  CopyPtr(@key, @KeyInts, SizeOf(KeyInts)); { !!.01 }
+  CopyPtr(@Block, @Blocks, SizeOf(Blocks)); { !!.01 }
   Right := Blocks[0];
   Left := Blocks[1];
 
@@ -4070,7 +4171,7 @@ begin
 
   Blocks[0] := Left;
   Blocks[1] := Right;
-  move(Blocks, Block, SizeOf(Block)); { !!.01 }
+  CopyPtr(@Blocks, @Block, SizeOf(Block)); { !!.01 }
 end;
 
 class procedure TLBC.InitEncryptLBC(const key: TKey128; var Context: TLBCContext; Rounds: Integer; Encrypt: Boolean);
@@ -4155,9 +4256,9 @@ begin
     end;
 end;
 
-{ TMD5Class }
+{ TCipherMD5 }
 
-class procedure TMD5Class.FinalizeMD5(var Context: TMD5Context; var Digest: TMD5Digest);
+class procedure TCipherMD5.FinalizeMD5(var Context: TMD5Context; var Digest: TMD5Digest);
 const
   Padding: array [0 .. 63] of Byte = (
     $80, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00,
@@ -4183,7 +4284,7 @@ begin
       PadLen := 120 - MDI;
   UpdateMD5(Context, Padding, PadLen);
 
-  move(Context, Context, SizeOf(Context)); { !!.01 }
+  CopyPtr(@Context, @Context, SizeOf(Context)); { !!.01 }
 
   { append length in bits and transform }
   II := 0;
@@ -4207,24 +4308,24 @@ begin
     end;
 end;
 
-class procedure TMD5Class.GenerateMD5Key(var key: TKey128; const ABytes: TBytes);
+class procedure TCipherMD5.GenerateMD5Key(var key: TKey128; const ABytes: TBytes);
 var
   d: TMD5Digest;
 begin
   HashMD5(d, ABytes[0], length(ABytes));
 end;
 
-class procedure TMD5Class.HashMD5(var Digest: TMD5Digest; const Buf; BufSize: Integer);
+class procedure TCipherMD5.HashMD5(var Digest: TMD5Digest; const Buf; BufSize: nativeInt);
 var
   Context: TMD5Context;
 begin
-  FillByte(Context, SizeOf(Context), $00);
+  FillPtrByte(@Context, SizeOf(Context), $00);
   InitMD5(Context);
   UpdateMD5(Context, Buf, BufSize);
   FinalizeMD5(Context, Digest);
 end;
 
-class procedure TMD5Class.InitMD5(var Context: TMD5Context);
+class procedure TCipherMD5.InitMD5(var Context: TMD5Context);
 begin
   Context.Count[0] := 0;
   Context.Count[1] := 0;
@@ -4236,44 +4337,40 @@ begin
   Context.State[3] := $10325476;
 end;
 
-class procedure TMD5Class.ByteBuffHashMD5(var Digest: TMD5Digest; const ABytes: TBytes);
+class procedure TCipherMD5.ByteBuffHashMD5(var Digest: TMD5Digest; const ABytes: TBytes);
 begin
   HashMD5(Digest, ABytes[0], length(ABytes));
 end;
 
-class procedure TMD5Class.UpdateMD5(var Context: TMD5Context; const Buf; BufSize: Integer);
+class procedure TCipherMD5.UpdateMD5(var Context: TMD5Context; const Buf; BufSize: nativeInt);
 var
   InBuf : TTransformInput;
-  BufOfs: Integer;
-  MDI   : Word;
-  i     : Word;
-  II    : Word;
+  BufOfs: nativeInt;
+  MDI   : DWord;
+  i     : DWord;
 begin
-  { compute number of bytes mod 64 }
+  // { compute number of bytes mod 64 }
   MDI := (Context.Count[0] shr 3) and $3F;
 
-  { update number of bits }
-  if ((Context.Count[0] + (DWord(BufSize) shl 3)) < Context.Count[0]) then
+  // { update number of bits }
+  if BufSize shl 3 < 0 then
       inc(Context.Count[1]);
+
   inc(Context.Count[0], BufSize shl 3);
   inc(Context.Count[1], BufSize shr 29);
 
   { add new byte acters to buffer }
   BufOfs := 0;
-  while (BufSize > 0) do begin
+  while (BufSize > 0) do
+    begin
       dec(BufSize);
       Context.Buf[MDI] := TByteArray(Buf)[BufOfs]; { !!.01 }
       inc(MDI);
       inc(BufOfs);
-      if (MDI = $40) then begin
-          II := 0;
-          for i := 0 to 15 do begin
-              InBuf[i] := Integer(Context.Buf[II + 3]) shl 24 or
-                Integer(Context.Buf[II + 2]) shl 16 or
-                Integer(Context.Buf[II + 1]) shl 8 or
-                Integer(Context.Buf[II]);
-              inc(II, 4);
-            end;
+      if (MDI = $40) then
+        begin
+          for i := 0 to 15 do
+              InBuf[i] := PDWord(@Context.Buf[i * 4])^;
           TMISC.Transform(Context.State, InBuf);
           MDI := 0;
         end;
@@ -4331,8 +4428,8 @@ begin
   { return Digest of requested DigestSize }
   { max digest is 2048-bit, although it could be greater if Pi2048 was larger }
   if DigestSize > SizeOf(Context.Digest) then
-      FillByte(Digest, DigestSize, 0);
-  move(Context.Digest, Digest, Min(SizeOf(Context.Digest), DigestSize));
+      FillPtrByte(@Digest, DigestSize, 0);
+  CopyPtr(@Context.Digest, @Digest, Min(SizeOf(Context.Digest), DigestSize));
 end;
 
 class procedure TLMD.GenerateLMDKey(var key; KeySize: Integer; const ABytes: TBytes);
@@ -4499,6 +4596,21 @@ begin
       X := Digest and $F0000000;
       if (X <> 0) then
           Digest := Digest xor (X shr 24);
+      Digest := Digest and (not X);
+    end;
+end;
+
+class procedure TMISC.HashELF64(var Digest: Int64; const Buf; BufSize: nativeUInt);
+var
+  i: nativeUInt;
+  X: Int64;
+begin
+  Digest := 0;
+  for i := 0 to BufSize - 1 do begin
+      Digest := (Digest shl 4) + TByteArray(Buf)[i]; { !!.01 }
+      X := Digest and Int64($F000000000000000);
+      if (X <> 0) then
+          Digest := Digest xor (X shr 56);
       Digest := Digest and (not X);
     end;
 end;
@@ -4673,22 +4785,22 @@ var
   C: DWord;
   d: DWord;
 
-  procedure FF(var A: DWord; const b, C, d, X, s, AC: DWord); inline;
+  procedure FF(var A: DWord; const b, C, d, X, s, AC: DWord); {$IFDEF INLINE_ASM}inline; {$ENDIF}
   begin
     A := RolX(A + ((b and C) or (not b and d)) + X + AC, s) + b;
   end;
 
-  procedure GG(var A: DWord; const b, C, d, X, s, AC: DWord); inline;
+  procedure GG(var A: DWord; const b, C, d, X, s, AC: DWord); {$IFDEF INLINE_ASM}inline; {$ENDIF}
   begin
     A := RolX(A + ((b and d) or (C and not d)) + X + AC, s) + b;
   end;
 
-  procedure HH(var A: DWord; const b, C, d, X, s, AC: DWord); inline;
+  procedure HH(var A: DWord; const b, C, d, X, s, AC: DWord); {$IFDEF INLINE_ASM}inline; {$ENDIF}
   begin
     A := RolX(A + (b xor C xor d) + X + AC, s) + b;
   end;
 
-  procedure II(var A: DWord; const b, C, d, X, s, AC: DWord); inline;
+  procedure II(var A: DWord; const b, C, d, X, s, AC: DWord); {$IFDEF INLINE_ASM}inline; {$ENDIF}
   begin
     A := RolX(A + (C xor (b or not d)) + X + AC, s) + b;
   end;
@@ -4802,7 +4914,7 @@ begin
 end;
 
 procedure DCP_twofish_InitKey(const key; Size: Cardinal; var SubKeys: TDCPTFSubKeys; var SBox: TDCPTFSBox);
-  function RS_MDS_Encode(lK0, lK1: DWord): DWord; inline;
+  function RS_MDS_Encode(lK0, lK1: DWord): DWord; {$IFDEF INLINE_ASM}inline; {$ENDIF}
   var
     lR, nJ, lG2, lG3: DWord;
     BB              : Byte;
@@ -4838,7 +4950,7 @@ procedure DCP_twofish_InitKey(const key; Size: Cardinal; var SubKeys: TDCPTFSubK
     Result := lR;
   end;
 
-  function f32(X: DWord; const K32: T128Bit; Len: DWord): DWord; inline;
+  function f32(X: DWord; const K32: T128Bit; Len: DWord): DWord; {$IFDEF INLINE_ASM}inline; {$ENDIF}
   var
     t0, t1, t2, t3: DWord;
   begin
@@ -4866,7 +4978,7 @@ procedure DCP_twofish_InitKey(const key; Size: Cardinal; var SubKeys: TDCPTFSubK
       twofish_SBox[3, DCPTF_p8x8[1, DCPTF_p8x8[1, t3] xor ((K32[1] shr 24))] xor ((K32[0] shr 24))];
   end;
 
-  procedure Xor256(var Dst: TDCPTF2048; const Src: TDCPTF2048; v: Byte); inline;
+  procedure Xor256(var Dst: TDCPTF2048; const Src: TDCPTF2048; v: Byte); {$IFDEF INLINE_ASM}inline; {$ENDIF}
   var
     i, J      : DWord;
     PDst, PSrc: PDWord;
@@ -4890,8 +5002,8 @@ var
   k64Cnt, i, J, A, b, q: DWord;
   L0, L1               : TDCPTF2048;
 begin
-  FillByte(key32, SizeOf(key32), 0);
-  move(key, key32, Size div 8);
+  FillPtrByte(@key32, SizeOf(key32), 0);
+  CopyPtr(@key, @key32, Size div 8);
   if Size <= 128 then { pad the key to either 128bit, 192bit or 256bit }
       Size := 128
   else if Size <= 192 then
@@ -5161,8 +5273,8 @@ begin
       OutData[k] := X[k] xor SubKeys[INPUTWHITEN + k]
 end;
 
-procedure DCP_towfish_Precomp; inline;
-  function LFSR1(X: DWord): DWord; inline;
+procedure DCP_towfish_Precomp; {$IFDEF INLINE_ASM}inline; {$ENDIF}
+  function LFSR1(X: DWord): DWord; {$IFDEF INLINE_ASM}inline; {$ENDIF}
   begin
     if (X and 1) <> 0 then
         Result := (X shr 1) xor (MDS_GF_FDBK div 2)
@@ -5170,7 +5282,7 @@ procedure DCP_towfish_Precomp; inline;
         Result := (X shr 1);
   end;
 
-  function LFSR2(X: DWord): DWord; inline;
+  function LFSR2(X: DWord): DWord; {$IFDEF INLINE_ASM}inline; {$ENDIF}
   begin
     if (X and 2) <> 0 then
       if (X and 1) <> 0 then
@@ -5184,12 +5296,12 @@ procedure DCP_towfish_Precomp; inline;
         Result := (X shr 2);
   end;
 
-  function Mul_X(X: DWord): DWord; inline;
+  function Mul_X(X: DWord): DWord; {$IFDEF INLINE_ASM}inline; {$ENDIF}
   begin
     Result := X xor LFSR2(X);
   end;
 
-  function Mul_Y(X: DWord): DWord; inline;
+  function Mul_Y(X: DWord): DWord; {$IFDEF INLINE_ASM}inline; {$ENDIF}
   begin
     Result := X xor LFSR1(X) xor LFSR2(X);
   end;
@@ -5225,7 +5337,7 @@ begin
     end;
 end;
 
-function XXTeaMX(Sum, Y, Z, p, E: DWord; const k: PDWordArray): DWord; inline;
+function XXTeaMX(Sum, Y, Z, p, E: DWord; const k: PDWordArray): DWord; {$IFDEF INLINE_ASM}inline; {$ENDIF}
 begin
   Result := (((Z shr 5) xor (Y shl 2)) + ((Y shr 3) xor (Z shl 4))) xor ((Sum xor Y) + (k^[p and 3 xor E] xor Z));
 end;
@@ -5316,11 +5428,11 @@ var
   i, J, k, xKeyLen, A, b: DWord;
 begin
   Size := Size div 8;
-  move(buff^, xKeyD, Size);
+  CopyPtr(buff, @xKeyD, Size);
   xKeyLen := Size div 4;
   if (Size mod 4) <> 0 then
       inc(xKeyLen);
-  move(cRC6_sBox, KeyContext, ((cRC6_NumRounds * 2) + 4) * 4);
+  CopyPtr(@cRC6_sBox, @KeyContext, ((cRC6_NumRounds * 2) + 4) * 4);
   i := 0;
   J := 0;
   A := 0;
@@ -5399,8 +5511,14 @@ end;
 
 initialization
 
-InitSysCBC;
+InitSysCBCAndDefaultKey(Int64($F0F0F0F0F0F00F0F));
 DCP_towfish_Precomp;
+{$IFDEF parallel}
 TPasMP.CreateGlobalInstance;
+{$ENDIF}
+
+finalization
+
+SetLength(SystemCBC, 0);
 
 end.

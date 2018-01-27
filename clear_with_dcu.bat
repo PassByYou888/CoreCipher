@@ -1,4 +1,10 @@
 del/s *.dcu
 del/s *.o
-del/s *.so
 del/s *.ppu
+del/s *.rsm
+del/s *.replay
+del/s *.loginpackage
+del/s *.dres
+del/s *.local
+del/s *.identcache
+del/s *.stat

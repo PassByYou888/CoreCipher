@@ -5,8 +5,8 @@ interface
 uses
   System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, CoreCipher,
-  FMX.StdCtrls, FMX.Controls.Presentation, FMX.ScrollBox, FMX.Memo,
-  DoStatusIO;
+  FMX.StdCtrls, FMX.Controls.Presentation, FMX.Memo,
+  DoStatusIO, FMX.Layouts;
 
 type
   TForm1 = class(TForm)
@@ -40,6 +40,7 @@ end;
 procedure TForm1.DoStatusNear(AText: string; const ID: Integer);
 begin
   Memo1.Lines.Add(AText);
+  Memo1.GoToTextEnd;
   Application.ProcessMessages;
 end;
 

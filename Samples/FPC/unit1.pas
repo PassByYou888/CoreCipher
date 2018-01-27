@@ -2,24 +2,13 @@ unit Unit1;
 
 {$mode objfpc}{$H+}
 {$MODESWITCH AdvancedRecords}
-{$A+} {Word Align Data}
-{$Q-} {Overflow Checking}
-{$R-} {Range-Checking}
-{$S-} {Stack-Overflow Checking}
-{$V-} {Var-String Checking}
-{$B-} {Complete Boolean Evaluation}
-{$I+} {Input/Output-Checking}
-{$P+} {Open Parameters}
-{$T-} {Typed @ Operator}
-{$W-} {Windows Stack Frame}
-{$X+} {Extended Syntax}
 
 
 interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, StdCtrls,
-  CoreCipher, DoStatusIO;
+  CoreCipher, DoStatusIO, PascalStrings;
 
 type
 
@@ -35,7 +24,7 @@ type
     { private declarations }
   public
     { public declarations }
-    procedure DoStatusNear(AText: string; const ID: Integer=0);
+    procedure DoStatusNear(AText: Systemstring; const ID: Integer=0);
   end;
 
 var
@@ -46,7 +35,7 @@ implementation
 {$R *.lfm}
 
 { TForm1 }
-procedure TForm1.DoStatusNear(AText: string; const ID: Integer=0);
+procedure TForm1.DoStatusNear(AText: Systemstring; const ID: Integer=0);
 begin
   Form1.Memo1.Lines.Add(AText);
   Application.ProcessMessages;

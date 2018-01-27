@@ -8,7 +8,7 @@ object Form1: TForm1
   ClientWidth = 715
   OnCreate = FormCreate
   OnDestroy = FormDestroy
-  LCLVersion = '1.6.4.0'
+  LCLVersion = '1.8.0.6'
   object Memo1: TMemo
     Left = 0
     Height = 502
