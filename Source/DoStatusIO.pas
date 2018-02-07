@@ -1,7 +1,8 @@
 { ****************************************************************************** }
 { * Status Library, writen by QQ 600585@qq.com                                 * }
 { * https://github.com/PassByYou888/CoreCipher                                 * }
-(* https://github.com/PassByYou888/ZServer4D *)
+{ * https://github.com/PassByYou888/ZServer4D                                  * }
+{ * https://github.com/PassByYou888/zExpression                                * }
 { ****************************************************************************** }
 
 unit DoStatusIO;
@@ -13,19 +14,19 @@ interface
 uses
   {$IF Defined(WIN32) or Defined(WIN64)}
   Windows,
-  {$ELSE}
+  {$ELSEIF not Defined(Linux)}
   FMX.Types,
   {$ENDIF}
-  Sysutils, Classes, PascalStrings, CoreClasses, MemoryStream64;
+  Sysutils, Classes, PascalStrings, UnicodeMixedLib, CoreClasses, MemoryStream64;
 
 type
   TDoStatusMethod = procedure(AText: SystemString; const ID: Integer) of object;
   TDoStatusCall   = procedure(AText: SystemString; const ID: Integer);
 
 procedure DoStatus(Text: SystemString; const ID: Integer); overload;
-procedure AddDoStatusHook(FlagObj: TCoreClassObject; CallProc: TDoStatusMethod); overload;
-procedure AddDoStatusHook(FlagObj: TCoreClassObject; CallProc: TDoStatusCall); overload;
-procedure DeleteDoStatusHook(FlagObj: TCoreClassObject);
+procedure AddDoStatusHook(TokenObj: TCoreClassObject; CallProc: TDoStatusMethod); overload;
+procedure AddDoStatusHook(TokenObj: TCoreClassObject; CallProc: TDoStatusCall); overload;
+procedure DeleteDoStatusHook(TokenObj: TCoreClassObject);
 procedure DisableStatus;
 procedure EnabledStatus;
 
@@ -41,6 +42,7 @@ procedure DoStatus(v: Pointer); overload;
 procedure DoStatus(v: SystemString; const Args: array of const); overload;
 procedure DoError(v: SystemString; const Args: array of const); overload;
 procedure DoStatus(v: SystemString); overload;
+procedure DoStatus(v: TMD5); overload;
 
 var
   LastDoStatus  : SystemString;
@@ -180,9 +182,14 @@ begin
   DoStatus(v, 0);
 end;
 
+procedure DoStatus(v: TMD5);
+begin
+  DoStatus(umlMD52String(v).Text);
+end;
+
 type
   TDoStatusData = record
-    FlagObj: TCoreClassObject;
+    TokenObj: TCoreClassObject;
     OnStatusNear: TDoStatusMethod;
     OnStatusFar: TDoStatusCall;
   end;
@@ -229,7 +236,7 @@ begin
       begin
         {$IF Defined(WIN32) or Defined(WIN64)}
         OutputDebugString(PWideChar('"' + Text + '"'));
-        {$ELSE}
+        {$ELSEIF not Defined(Linux)}
         FMX.Types.Log.d('"' + Text + '"');
         {$ENDIF}
       end;
@@ -263,6 +270,7 @@ begin
       exit;
     end;
 
+  LockObject(HookDoSatus);
   try
     if (StatusActive) and (HookDoSatus.Count > 0) then
       begin
@@ -285,7 +293,7 @@ begin
       begin
         {$IF Defined(WIN32) or Defined(WIN64)}
         OutputDebugString(PWideChar('"' + Text + '"'));
-        {$ELSE}
+        {$ELSEIF not Defined(Linux)}
         FMX.Types.Log.d('"' + Text + '"');
         {$ENDIF}
       end;
@@ -293,8 +301,8 @@ begin
     if ((ConsoleOutput) or (ID = 2)) and (IsConsole) then
         Writeln(Text);
   finally
+      UnLockObject(HookDoSatus);
   end;
-
 end;
 
 procedure DoStatus(Text: SystemString; const ID: Integer);
@@ -302,29 +310,29 @@ begin
   OnDoStatusHook(Text, ID);
 end;
 
-procedure AddDoStatusHook(FlagObj: TCoreClassObject; CallProc: TDoStatusMethod);
+procedure AddDoStatusHook(TokenObj: TCoreClassObject; CallProc: TDoStatusMethod);
 var
   _Data: PDoStatusData;
 begin
   New(_Data);
-  _Data^.FlagObj := FlagObj;
+  _Data^.TokenObj := TokenObj;
   _Data^.OnStatusNear := CallProc;
   _Data^.OnStatusFar := nil;
   HookDoSatus.Add(_Data);
 end;
 
-procedure AddDoStatusHook(FlagObj: TCoreClassObject; CallProc: TDoStatusCall);
+procedure AddDoStatusHook(TokenObj: TCoreClassObject; CallProc: TDoStatusCall);
 var
   _Data: PDoStatusData;
 begin
   New(_Data);
-  _Data^.FlagObj := FlagObj;
+  _Data^.TokenObj := TokenObj;
   _Data^.OnStatusNear := nil;
   _Data^.OnStatusFar := CallProc;
   HookDoSatus.Add(_Data);
 end;
 
-procedure DeleteDoStatusHook(FlagObj: TCoreClassObject);
+procedure DeleteDoStatusHook(TokenObj: TCoreClassObject);
 var
   i: Integer;
   p: PDoStatusData;
@@ -333,7 +341,7 @@ begin
   while i < HookDoSatus.Count do
     begin
       p := HookDoSatus[i];
-      if p^.FlagObj = FlagObj then
+      if p^.TokenObj = TokenObj then
         begin
           Dispose(p);
           HookDoSatus.Delete(i);

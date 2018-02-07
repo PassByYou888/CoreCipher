@@ -1,16 +1,16 @@
 { ****************************************************************************** }
 { * MixedLibrary,writen by QQ 600585@qq.com                                    * }
 { * https://github.com/PassByYou888/CoreCipher                                 * }
-(* https://github.com/PassByYou888/ZServer4D *)
-{ ***************************************************************************** }
-
+{ * https://github.com/PassByYou888/ZServer4D                                  * }
+{ * https://github.com/PassByYou888/zExpression                                * }
 { ****************************************************************************** }
-{ ***************************************************************
+
+{
   *
   * Unit Name: MixedLibrary
   * Purpose  : mixed Low Level Function Library
   *
-  **************************************************************** }
+}
 
 (*
   update history
@@ -217,9 +217,9 @@ function umlCopyFile(SourFile, DestFile: umlString): Boolean;
 function umlRenameFile(OldName, NewName: umlString): Boolean;
 
 { umlString }
-procedure umlSetLength(var aStr: umlString; NewStrLength: Integer); overload;
-procedure umlSetLength(var aStr: umlBytes; NewStrLength: Integer); overload;
-procedure umlSetLength(var aStr: umlArrayString; NewStrLength: Integer); overload;
+procedure umlSetLength(var aStr: umlString; len: Integer); overload;
+procedure umlSetLength(var aStr: umlBytes; len: Integer); overload;
+procedure umlSetLength(var aStr: umlArrayString; len: Integer); overload;
 
 function umlGetLength(aStr: umlString): Integer; overload;
 function umlGetLength(var aStr: umlBytes): Integer; overload;
@@ -344,6 +344,7 @@ function umlMD52String(md5: TMD5): umlString;
 function umlMD5Compare(const m1, m2: TMD5): Boolean; {$IFDEF INLINE_ASM} inline; {$ENDIF}
 function umlCompareMD5(const m1, m2: TMD5): Boolean; {$IFDEF INLINE_ASM} inline; {$ENDIF}
 function umlIsNullMD5(m: TMD5): Boolean; {$IFDEF INLINE_ASM} inline; {$ENDIF}
+function umlWasNullMD5(m: TMD5): Boolean; {$IFDEF INLINE_ASM} inline; {$ENDIF}
 
 
 const
@@ -791,10 +792,10 @@ function umlGetResourceStream(const FileName: umlString): TStream;
 var
   n: umlString;
 begin
-  Result := nil;
-
   if FileName.Exists('.') then
-      n := umlDeleteLastStr(FileName, '.');
+      n := umlDeleteLastStr(FileName, '.')
+  else
+      n := FileName;
 
   Result := TResourceStream.Create(hInstance, n.Text, RT_RCDATA);
 end;
@@ -1919,19 +1920,19 @@ begin
   Result := RenameFile(OldName.Text, NewName.Text);
 end;
 
-procedure umlSetLength(var aStr: umlString; NewStrLength: Integer);
+procedure umlSetLength(var aStr: umlString; len: Integer);
 begin
-  aStr.len := NewStrLength;
+  aStr.len := len;
 end;
 
-procedure umlSetLength(var aStr: umlBytes; NewStrLength: Integer);
+procedure umlSetLength(var aStr: umlBytes; len: Integer);
 begin
-  SetLength(aStr, NewStrLength);
+  SetLength(aStr, len);
 end;
 
-procedure umlSetLength(var aStr: umlArrayString; NewStrLength: Integer);
+procedure umlSetLength(var aStr: umlArrayString; len: Integer);
 begin
-  SetLength(aStr, NewStrLength);
+  SetLength(aStr, len);
 end;
 
 function umlGetLength(aStr: umlString): Integer;
@@ -3685,7 +3686,7 @@ begin
 end;
 
 function umlMD5(const BuffPtr: PBYTE; BufSiz: NativeUInt): TMD5;
-{$IF Defined(FastMD5) and (Defined(WIN32) or Defined(WIN64))}
+{$IF Defined(FastMD5) and Defined(Delphi) and (Defined(WIN32) or Defined(WIN64))}
 begin
   Result := FastMD5(BuffPtr, BufSiz);
 end;
@@ -3752,7 +3753,7 @@ begin
 end;
 
 function umlStreamMD5(Stream: TCoreClassStream; StartPos, EndPos: Int64): TMD5;
-{$IF Defined(FastMD5) and (Defined(WIN32) or Defined(WIN64))}
+{$IF Defined(FastMD5) and Defined(Delphi) and (Defined(WIN32) or Defined(WIN64))}
 begin
   Result := FastMD5(Stream, StartPos, EndPos);
 end;
@@ -3932,10 +3933,14 @@ begin
   Result := umlCompareMD5(m, NullMD5);
 end;
 
+function umlWasNullMD5(m: TMD5): Boolean;
+begin
+  Result := umlCompareMD5(m, NullMD5);
+end;
+
 function umlCRC16(const Value: PBYTE; const Count: NativeUInt): Word;
 var
-  i: NativeUInt;
-var
+  i : NativeUInt;
   pb: PByteArray absolute Value;
 begin
   Result := 0;
@@ -4018,8 +4023,7 @@ end;
 
 function umlCRC32(const Value: PBYTE; const Count: NativeUInt): Cardinal;
 var
-  i: NativeUInt;
-var
+  i : NativeUInt;
   pb: PByteArray absolute Value;
 begin
   Result := $FFFFFFFF;

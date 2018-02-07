@@ -1,7 +1,8 @@
 { ****************************************************************************** }
 { * hash Library,Writen by QQ 600585@qq.com                                    * }
 { * https://github.com/PassByYou888/CoreCipher                                 * }
-(* https://github.com/PassByYou888/ZServer4D *)
+{ * https://github.com/PassByYou888/ZServer4D                                  * }
+{ * https://github.com/PassByYou888/zExpression                                * }
 { ****************************************************************************** }
 
 (*
@@ -459,6 +460,10 @@ type
 
   PHashVariantListData = ^THashVariantListData;
 
+  THashVariantListLoopCall               = procedure(Sender: THashVariantList; Name: PSystemString; const V: Variant);
+  THashVariantListLoopMethod             = procedure(Sender: THashVariantList; Name: PSystemString; const V: Variant) of object;
+  {$IFNDEF FPC} THashVariantListLoopProc = reference to procedure(Sender: THashVariantList; name: PSystemString; const V: Variant); {$ENDIF}
+
   THashVariantList = class(TCoreClassObject)
   private
     FHashList              : THashList;
@@ -485,11 +490,19 @@ type
     constructor Create; overload;
     constructor Create(MaxHashBlock: Integer); overload;
     destructor Destroy; override;
+    //
     procedure Assign(sour: THashVariantList);
+    //
+    procedure Progress(OnProgress: THashVariantListLoopCall); overload;
+    procedure Progress(OnProgress: THashVariantListLoopMethod); overload;
+    {$IFNDEF FPC} procedure Progress(OnProgress: THashVariantListLoopProc); overload; {$ENDIF}
+    //
     procedure Clear; {$IFDEF INLINE_ASM} inline; {$ENDIF}
+    //
     procedure GetNameList(OutputList: TCoreClassStrings); overload;
     procedure GetNameList(OutputList: TListString); overload;
     procedure GetNameList(OutputList: TListPascalString); overload;
+    //
     procedure Delete(Name: SystemString); {$IFDEF INLINE_ASM} inline; {$ENDIF}
     function Add(Name: SystemString; V: Variant): Variant; {$IFDEF INLINE_ASM} inline; {$ENDIF}
     function FastAdd(Name: SystemString; V: Variant): Variant; {$IFDEF INLINE_ASM} inline; {$ENDIF}
@@ -510,7 +523,7 @@ type
     function GetDefaultValue(Name: SystemString; aValue: Variant): Variant;
     procedure SetDefaultValue(Name: SystemString; aValue: Variant);
 
-    function ReplaceMacro(const AText, HeadFlag, TailFlag: SystemString; var Output: SystemString): Boolean;
+    function ReplaceMacro(const AText, HeadToken, TailToken: SystemString; var Output: SystemString): Boolean;
 
     property AutoUpdateDefaultValue: Boolean read FAutoUpdateDefaultValue write FAutoUpdateDefaultValue;
     property AccessOptimization: Boolean read GetAccessOptimization write SetAccessOptimization;
@@ -976,11 +989,13 @@ uses Math, DoStatusIO, UnicodeMixedLib;
 function MakeHash(var s: SystemString): THash;
 begin
   Result := FastHashSystemString(@s);
+  Result := umlCRC32(@Result, SizeOf(THash));
 end;
 
 function MakeHash(var s: TPascalString): THash;
 begin
   Result := FastHashPascalString(@s);
+  Result := umlCRC32(@Result, SizeOf(THash));
 end;
 
 function MakeHash(var i64: Int64): THash;
@@ -4461,6 +4476,75 @@ begin
     end;
 end;
 
+procedure THashVariantList.Progress(OnProgress: THashVariantListLoopCall);
+var
+  i: Integer;
+  p: PHashListData;
+begin
+  if HashList.Count > 0 then
+    begin
+      i := 0;
+      p := HashList.FirstPtr;
+      while i < HashList.Count do
+        begin
+          try
+              OnProgress(Self, @p^.OriginName, PHashVariantListData(p^.Data)^.V);
+          except
+          end;
+          Inc(i);
+          p := p^.next;
+        end;
+    end;
+end;
+
+procedure THashVariantList.Progress(OnProgress: THashVariantListLoopMethod);
+var
+  i: Integer;
+  p: PHashListData;
+begin
+  if HashList.Count > 0 then
+    begin
+      i := 0;
+      p := HashList.FirstPtr;
+      while i < HashList.Count do
+        begin
+          try
+              OnProgress(Self, @p^.OriginName, PHashVariantListData(p^.Data)^.V);
+          except
+          end;
+          Inc(i);
+          p := p^.next;
+        end;
+    end;
+end;
+
+{$IFNDEF FPC}
+
+
+procedure THashVariantList.Progress(OnProgress: THashVariantListLoopProc);
+var
+  i: Integer;
+  p: PHashListData;
+begin
+  if HashList.Count > 0 then
+    begin
+      i := 0;
+      p := HashList.FirstPtr;
+      while i < HashList.Count do
+        begin
+          try
+              OnProgress(Self, @p^.OriginName, PHashVariantListData(p^.Data)^.V);
+          except
+          end;
+          Inc(i);
+          p := p^.next;
+        end;
+    end;
+end;
+
+{$ENDIF}
+
+
 procedure THashVariantList.Clear;
 begin
   FHashList.Clear;
@@ -4829,36 +4913,36 @@ begin
   SetNames(name, aValue);
 end;
 
-function THashVariantList.ReplaceMacro(const AText, HeadFlag, TailFlag: SystemString; var Output: SystemString): Boolean;
+function THashVariantList.ReplaceMacro(const AText, HeadToken, TailToken: SystemString; var Output: SystemString): Boolean;
 var
   sour      : umlString;
-  hf, tf    : umlString;
+  h, t      : umlString;
   bPos, ePos: Integer;
   KeyText   : SystemString;
   i         : Integer;
 begin
   Output := '';
   sour.Text := AText;
-  hf.Text := HeadFlag;
-  tf.Text := TailFlag;
+  h.Text := HeadToken;
+  t.Text := TailToken;
   Result := True;
 
   i := 1;
 
   while i <= sour.Len do
     begin
-      if sour.ComparePos(i, hf) then
+      if sour.ComparePos(i, h) then
         begin
           bPos := i;
-          ePos := sour.GetPos(tf, i + hf.Len);
+          ePos := sour.GetPos(t, i + h.Len);
           if ePos > 0 then
             begin
-              KeyText := sour.copy(bPos + hf.Len, ePos - (bPos + hf.Len)).Text;
+              KeyText := sour.copy(bPos + h.Len, ePos - (bPos + h.Len)).Text;
 
               if Exists(KeyText) then
                 begin
                   Output := Output + VarToStr(GetNameValue(KeyText));
-                  i := ePos + tf.Len;
+                  i := ePos + t.Len;
                   Continue;
                 end
               else

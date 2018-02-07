@@ -1,3 +1,9 @@
+{ ****************************************************************************** }
+{ * Fast md5                                                                   * }
+{ * https://github.com/PassByYou888/CoreCipher                                 * }
+{ * https://github.com/PassByYou888/ZServer4D                                  * }
+{ * https://github.com/PassByYou888/zExpression                                * }
+{ ****************************************************************************** }
 unit Fast_MD5;
 
 {$I zDefine.inc}
@@ -5,14 +11,10 @@ unit Fast_MD5;
 interface
 
 
-{$IF Defined(Delphi)}
-
 uses CoreClasses, UnicodeMixedLib;
 
 function FastMD5(const BuffPtr: PBYTE; BufSiz: NativeUInt): TMD5; overload;
 function FastMD5(Stream: TCoreClassStream; const StartPos, EndPos: Int64): TMD5; overload;
-
-{$ENDIF}
 
 implementation
 
@@ -109,7 +111,7 @@ begin
   PCardinal(@digest[8])^ := $98BADCFE;
   PCardinal(@digest[12])^ := $10325476;
 
-  if BufSiz shl 3 < 0 then
+  if (BufSiz shl 3) < 0 then
       Inc(Hi);
 
   Inc(Lo, BufSiz shl 3);
@@ -179,7 +181,7 @@ begin
   BufSiz := EndPos - StartPos;
   rest := 0;
 
-  if BufSiz shl 3 < 0 then
+  if (BufSiz shl 3) < 0 then
       Inc(Hi);
 
   Inc(Lo, BufSiz shl 3);
@@ -232,6 +234,19 @@ begin
   MD5_Transform(Result, WorkBuf);
 end;
 
-{$ENDIF}
+{$ELSE}
+
+
+function FastMD5(const BuffPtr: PBYTE; BufSiz: NativeUInt): TMD5;
+begin
+  Result := umlMD5(BuffPtr, BufSiz);
+end;
+
+function FastMD5(Stream: TCoreClassStream; const StartPos, EndPos: Int64): TMD5;
+begin
+  Result := umlStreamMD5(Stream, StartPos, EndPos);
+end;
+
+{$ENDIF Defined(MSWINDOWS) and Defined(Delphi)}
 
 end.

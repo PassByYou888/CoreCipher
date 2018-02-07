@@ -1,8 +1,9 @@
 { ****************************************************************************** }
 { * support > 2G TMemoryStream64, writen by QQ 600585@qq.com                   * }
 { * https://github.com/PassByYou888/CoreCipher                                 * }
-(* https://github.com/PassByYou888/ZServer4D *)
-{ ******************************************************************************* }
+{ * https://github.com/PassByYou888/ZServer4D                                  * }
+{ * https://github.com/PassByYou888/zExpression                                * }
+{ ****************************************************************************** }
 
 unit MemoryStream64;
 
@@ -58,15 +59,13 @@ type
     function Write64(const Buffer; Count: Int64): Int64; virtual;
     function WritePtr(const p: Pointer; Count: Int64): Int64; {$IFDEF INLINE_ASM} inline; {$ENDIF}
     function Write(const Buffer; Count: Longint): Longint; overload; override;
-    {$IFNDEF FPC}
-    function Write(const Buffer: TBytes; Offset, Count: Longint): Longint; overload; override;
-    {$ENDIF}
+    {$IFNDEF FPC} function Write(const Buffer: TBytes; Offset, Count: Longint): Longint; overload; override; {$ENDIF}
+    //
     function Read64(var Buffer; Count: Int64): Int64; virtual;
     function ReadPtr(const p: Pointer; Count: Int64): Int64; {$IFDEF INLINE_ASM} inline; {$ENDIF}
     function Read(var Buffer; Count: Longint): Longint; overload; override;
-    {$IFNDEF FPC}
-    function Read(Buffer: TBytes; Offset, Count: Longint): Longint; overload; override;
-    {$ENDIF}
+    {$IFNDEF FPC} function Read(Buffer: TBytes; Offset, Count: Longint): Longint; overload; override; {$ENDIF}
+    //
     function Seek(const Offset: Int64; Origin: TSeekOrigin): Int64; override;
     property Memory: Pointer read FMemory;
 
@@ -361,7 +360,7 @@ begin
       exit;
     end;
 
-  if (FPosition >= 0) and (Count >= 0) then
+  if (Count > 0) then
     begin
       p := FPosition;
       p := p + Count;
@@ -399,7 +398,7 @@ function TMemoryStream64.Write(const Buffer: TBytes; Offset, Count: Longint): Lo
 var
   p: Int64;
 begin
-  if (FPosition >= 0) and (Count >= 0) then
+  if Count > 0 then
     begin
       p := FPosition;
       p := p + Count;
@@ -424,7 +423,7 @@ end;
 
 function TMemoryStream64.Read64(var Buffer; Count: Int64): Int64;
 begin
-  if (FPosition >= 0) and (Count >= 0) then
+  if Count > 0 then
     begin
       Result := FSize;
       Result := Result - FPosition;
@@ -457,7 +456,7 @@ function TMemoryStream64.Read(Buffer: TBytes; Offset, Count: Longint): Longint;
 var
   p: Int64;
 begin
-  if (FPosition >= 0) and (Count >= 0) then
+  if Count > 0 then
     begin
       p := FSize;
       p := p - FPosition;

@@ -1,7 +1,8 @@
 { ***************************************************************************** }
 { * string support,writen by QQ 600585@qq.com                                 * }
 { * https://github.com/PassByYou888/CoreCipher                                 * }
-(* https://github.com/PassByYou888/ZServer4D *)
+{ * https://github.com/PassByYou888/ZServer4D                                  * }
+{ * https://github.com/PassByYou888/zExpression                                * }
 { ****************************************************************************** }
 
 (*
@@ -77,7 +78,8 @@ type
     function Same(const IgnoreCase: Boolean; const t: TPascalString): Boolean; overload; {$IFDEF INLINE_ASM} inline; {$ENDIF}
     function ComparePos(Offset: Integer; const t: PPascalString): Boolean; overload; {$IFDEF INLINE_ASM} inline; {$ENDIF}
     function ComparePos(Offset: Integer; const t: TPascalString): Boolean; overload; {$IFDEF INLINE_ASM} inline; {$ENDIF}
-    function GetPos(const SubStr: TPascalString; const Offset: Integer = 1): Integer; {$IFDEF INLINE_ASM} inline; {$ENDIF}
+    function GetPos(const SubStr: TPascalString; const Offset: Integer = 1): Integer; overload; {$IFDEF INLINE_ASM} inline; {$ENDIF}
+    function GetPos(const SubStr: PPascalString; const Offset: Integer = 1): Integer; overload; {$IFDEF INLINE_ASM} inline; {$ENDIF}
     function Exists(c: SystemChar): Boolean; overload;
     function Exists(c: array of SystemChar): Boolean; overload;
 
@@ -88,10 +90,11 @@ type
     procedure DeleteFirst; {$IFDEF INLINE_ASM} inline; {$ENDIF}
     procedure Delete(idx, cnt: Integer); {$IFDEF INLINE_ASM} inline; {$ENDIF}
     procedure Clear; {$IFDEF INLINE_ASM} inline; {$ENDIF}
-    procedure Append(t: TPascalString); {$IFDEF INLINE_ASM} inline; {$ENDIF}
+    procedure Append(t: TPascalString); overload;
+    procedure Append(c: SystemChar); overload;
     function GetString(bPos, ePos: Integer): TPascalString; {$IFDEF INLINE_ASM} inline; {$ENDIF}
     procedure Insert(AText: SystemString; idx: Integer); {$IFDEF INLINE_ASM} inline; {$ENDIF}
-    procedure AsText(var Output: SystemString); {$IFDEF INLINE_ASM} inline; {$ENDIF}
+    procedure FastAsText(var Output: SystemString);
     procedure FastGetBytes(var Output: TBytes); {$IFDEF INLINE_ASM} inline; {$ENDIF}
     property Text: SystemString read GetText write SetText;
     function LowerText: SystemString;
@@ -106,6 +109,7 @@ type
   TOrdChars = set of TOrdChar;
 
 function CharIn(c: SystemChar; const SomeChars: array of SystemChar): Boolean; overload;
+function CharIn(c: SystemChar; const SomeChar: SystemChar): Boolean; overload; {$IFDEF INLINE_ASM} inline; {$ENDIF}
 function CharIn(c: SystemChar; const s: TPascalString): Boolean; overload; {$IFDEF INLINE_ASM} inline; {$ENDIF}
 function CharIn(c: SystemChar; const p: PPascalString): Boolean; overload; {$IFDEF INLINE_ASM} inline; {$ENDIF}
 function CharIn(c: SystemChar; const SomeCharsets: TOrdChars): Boolean; overload; {$IFDEF INLINE_ASM} inline; {$ENDIF}
@@ -168,7 +172,7 @@ const
   {$ENDIF}
   SystemCharSize = SizeOf(SystemChar);
 
-procedure CombineCharsPP(const c1, c2: TPascalChars; var Output: TPascalChars);  {$IFDEF INLINE_ASM} inline; {$ENDIF}
+procedure CombineCharsPP(const c1, c2: TPascalChars; var Output: TPascalChars); {$IFDEF INLINE_ASM} inline; {$ENDIF}
 var
   ll, rl: Integer;
 begin
@@ -181,7 +185,7 @@ begin
       CopyPtr(@c2[0], @Output[ll], rl * SystemCharSize);
 end;
 
-procedure CombineCharsSP(c1: SystemString; c2: TPascalChars; var Output: TPascalChars);  {$IFDEF INLINE_ASM} inline; {$ENDIF}
+procedure CombineCharsSP(c1: SystemString; c2: TPascalChars; var Output: TPascalChars); {$IFDEF INLINE_ASM} inline; {$ENDIF}
 var
   ll, rl: Integer;
 begin
@@ -194,7 +198,7 @@ begin
       CopyPtr(@c2[0], @Output[ll], rl * SystemCharSize);
 end;
 
-procedure CombineCharsPS(c1: TPascalChars; c2: SystemString; var Output: TPascalChars);  {$IFDEF INLINE_ASM} inline; {$ENDIF}
+procedure CombineCharsPS(c1: TPascalChars; c2: SystemString; var Output: TPascalChars); {$IFDEF INLINE_ASM} inline; {$ENDIF}
 var
   ll, rl: Integer;
 begin
@@ -207,7 +211,7 @@ begin
       CopyPtr(@c2[FirstCharPos], @Output[ll], rl * SystemCharSize);
 end;
 
-procedure CombineCharsCP(const c1: SystemChar; c2: TPascalChars; var Output: TPascalChars);  {$IFDEF INLINE_ASM} inline; {$ENDIF}
+procedure CombineCharsCP(const c1: SystemChar; c2: TPascalChars; var Output: TPascalChars); {$IFDEF INLINE_ASM} inline; {$ENDIF}
 var
   rl: Integer;
 begin
@@ -218,7 +222,7 @@ begin
       CopyPtr(@c2[0], @Output[1], rl * SystemCharSize);
 end;
 
-procedure CombineCharsPC(const c1: TPascalChars; c2: SystemChar; var Output: TPascalChars);  {$IFDEF INLINE_ASM} inline; {$ENDIF}
+procedure CombineCharsPC(const c1: TPascalChars; c2: SystemChar; var Output: TPascalChars); {$IFDEF INLINE_ASM} inline; {$ENDIF}
 var
   ll: Integer;
 begin
@@ -238,6 +242,11 @@ begin
     if AChar = c then
         Exit;
   Result := False;
+end;
+
+function CharIn(c: SystemChar; const SomeChar: SystemChar): Boolean;
+begin
+  Result := c = SomeChar;
 end;
 
 function CharIn(c: SystemChar; const s: TPascalString): Boolean;
@@ -536,8 +545,6 @@ begin
 end;
 
 procedure TPascalString.SetText(const Value: SystemString);
-var
-  i: Integer;
 begin
   SetLength(Buff, Length(Value));
   CopyPtr(@Value[FirstCharPos], @Buff[0], Length(Buff) * SystemCharSize);
@@ -564,8 +571,6 @@ begin
 end;
 
 procedure TPascalString.SetBytes(const Value: TBytes);
-var
-  i: Integer;
 begin
   SetLength(Buff, 0);
   try
@@ -834,6 +839,17 @@ begin
           Exit(i);
 end;
 
+function TPascalString.GetPos(const SubStr: PPascalString; const Offset: Integer = 1): Integer;
+var
+  i: Integer;
+begin
+  Result := 0;
+  if SubStr^.Len > 0 then
+    for i := Offset to Len - SubStr^.Len + 1 do
+      if ComparePos(i, SubStr) then
+          Exit(i);
+end;
+
 function TPascalString.Exists(c: SystemChar): Boolean;
 var
   i: Integer;
@@ -892,6 +908,12 @@ begin
     end;
 end;
 
+procedure TPascalString.Append(c: SystemChar);
+begin
+  SetLength(Buff, Length(Buff) + 1);
+  Buff[Length(Buff) - 1] := c;
+end;
+
 function TPascalString.GetString(bPos, ePos: Integer): TPascalString;
 begin
   Result.Text := Self.copy(bPos, ePos - bPos);
@@ -902,7 +924,7 @@ begin
   Text := GetString(1, idx) + AText + GetString(idx + 1, Len);
 end;
 
-procedure TPascalString.AsText(var Output: SystemString);
+procedure TPascalString.FastAsText(var Output: SystemString);
 begin
   SetLength(Output, Length(Buff));
   CopyPtr(@Buff[0], @Output[FirstCharPos], Length(Buff) * SystemCharSize);

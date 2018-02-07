@@ -1,3 +1,7 @@
+{ * https://github.com/PassByYou888/CoreCipher                                 * }
+{ * https://github.com/PassByYou888/ZServer4D                                  * }
+{ * https://github.com/PassByYou888/zExpression                                * }
+{ ****************************************************************************** }
 {$IFDEF FPC}
 
 {$MODE objfpc}
@@ -11,13 +15,12 @@
 {$ENDIF}
 
 {$UNDEF Delphi}
-{$DEFINE parallel}
 {$UNDEF FastMD5}
+{$DEFINE parallel}
 {$DEFINE OptimizationMemoryStreamMD5}
+{$DEFINE CriticalSimulateAtomic}
 
 {$ELSE}
-
-{$DEFINE DELPHI}
 
 {$IFDEF ANDROID}
 {$DEFINE FirstCharInZero}
@@ -28,27 +31,38 @@
 {$ENDIF}
 
 {$DEFINE Delphi}
-
-{$DEFINE parallel}
 {$DEFINE FastMD5}
+{$DEFINE parallel}
 {$DEFINE OptimizationMemoryStreamMD5}
+
+// used Critical Simulate Atomic with TMonitor.Enter(obj) and TMonitor.Exit(obj)
+// if CriticalSimulateAtomic defined so performance to be reduced
+{ .$DEFINE CriticalSimulateAtomic }
+
+{$IFDEF Linux}
+{$DEFINE CriticalSimulateAtomic}
+{$UNDEF parallel}
+{$ENDIF}
 
 {$ENDIF}
 
-//{$WARNINGS OFF}
-//{$HINTS OFF}
-
+{$WARNINGS OFF}
+{$HINTS OFF}
 {$H+} { long string }
 {$R-} { range check }
 {$A+} { Word Align Data }
+// {$O-} { optimization }
 
 (*
   {$IFDEF FPC}
-  {$ELSE}
-  {$ENDIF}
+  {$ELSE }
+  {$ENDIF FPC}
 
   {$IFNDEF FPC}
-  {$ENDIF}
+  {$ENDIF FPC}
+
+  {$Region 'RegionName'}
+  {$EndRegion}
 *)
 
 {$IFDEF release}
@@ -68,5 +82,3 @@
 {$IFNDEF CPU64}
 {$DEFINE CPU32}
 {$ENDIF}
-
-

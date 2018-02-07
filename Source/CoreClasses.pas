@@ -1,8 +1,9 @@
 {******************************************************************************}
 {* Core class library  written by QQ 600585@qq.com                            *}
-{* https://github.com/PassByYou888/CoreCipher                                 *}
-(* https://github.com/PassByYou888/ZServer4D                                  *)
-{******************************************************************************}
+{ * https://github.com/PassByYou888/CoreCipher                                 * }
+{ * https://github.com/PassByYou888/ZServer4D                                  * }
+{ * https://github.com/PassByYou888/zExpression                                * }
+{ ****************************************************************************** }
 
 (*
   update history
@@ -16,7 +17,8 @@ unit CoreClasses;
 
 interface
 
-uses SysUtils, Classes, Types, PascalStrings
+uses SysUtils, Classes, Types, PascalStrings,
+  SyncObjs
   {$IFDEF FPC}
     , Contnrs, fgl
   {$ELSE}
@@ -158,7 +160,6 @@ const
   CurrentPlatform = TExecutePlatform.epUnknow;
   {$IFEND}
 
-procedure EmptyProc;
 procedure Empty;
 
 procedure DisposeObject(const obj: TObject); overload; {$IFDEF INLINE_ASM} inline; {$ENDIF}
@@ -176,7 +177,7 @@ procedure CopyPtr(sour, dest:Pointer; Count: NativeUInt); {$IFDEF INLINE_ASM} in
 procedure RaiseInfo(n: SystemString); overload;
 procedure RaiseInfo(n: SystemString; const Args: array of const); overload;
 
-function IsMobile: Boolean;
+function IsMobile: Boolean; {$IFDEF INLINE_ASM} inline; {$ENDIF}
 
 function GetTimeTickCount: TTimeTickValue; {$IFDEF INLINE_ASM} inline; {$ENDIF}
 function GetTimeTick: TTimeTickValue; {$IFDEF INLINE_ASM} inline; {$ENDIF}
@@ -185,10 +186,6 @@ function GetCrashTimeTick: TTimeTickValue;
 threadvar MHGlobalHookEnabled: Boolean;
 
 implementation
-
-procedure EmptyProc;
-begin
-end;
 
 procedure Empty;
 begin
@@ -240,19 +237,31 @@ begin
       FreeObject(obj);
 end;
 
+{$I CoreAtomic.inc}
+
 procedure LockObject(obj:TObject);
 begin
 {$IFDEF FPC}
+  _LockCriticalObj(obj);
 {$ELSE}
+  {$IFDEF CriticalSimulateAtomic}
+  _LockCriticalObj(obj);
+  {$ELSE}
   TMonitor.Enter(obj);
+  {$ENDIF}
 {$ENDIF}
 end;
 
 procedure UnLockObject(obj:TObject);
 begin
 {$IFDEF FPC}
+  _UnLockCriticalObj(obj);
 {$ELSE}
+  {$IFDEF CriticalSimulateAtomic}
+  _UnLockCriticalObj(obj);
+  {$ELSE}
   TMonitor.Exit(obj);
+  {$ENDIF}
 {$ENDIF}
 end;
 
@@ -399,8 +408,10 @@ end;
 {$ENDIF}
 
 initialization
+  InitCriticalLock;
   MHGlobalHookEnabled := True;
 finalization
+  FreeCriticalLock;
   MHGlobalHookEnabled := False;
 end.
 

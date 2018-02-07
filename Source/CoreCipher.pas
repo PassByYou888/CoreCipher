@@ -1,6 +1,8 @@
 { ****************************************************************************** }
 { * Core cipher Library ,writen by QQ 600585@qq.com                            * }
 { * https://github.com/PassByYou888/CoreCipher                                 * }
+{ * https://github.com/PassByYou888/ZServer4D                                  * }
+{ * https://github.com/PassByYou888/zExpression                                * }
 { ****************************************************************************** }
 
 (*
@@ -1651,7 +1653,6 @@ end;
 class function TCipher.OLDDES(sour: Pointer; Size: nativeInt; KeyBuff: PCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean;
 var
   k: TDESKey;
-  d: TDESContext;
   p: nativeUInt;
 begin
   Result := False;
@@ -1668,7 +1669,9 @@ begin
         umlDES(PDESKey(nativeUInt(sour) + p)^, PDESKey(nativeUInt(sour) + p)^, k, Encrypt);
         p := p + 8;
       until p + 8 > Size;
-    end;
+    end
+  else
+      p := 0;
 
   if (ProcessTail) and (Size - p > 0) then
       EncryptTail(Pointer(nativeUInt(sour) + p), Size - p);
@@ -1697,7 +1700,9 @@ begin
         TDES.EncryptDES(d, PDESBlock(nativeUInt(sour) + p)^);
         p := p + 8;
       until p + 8 > Size;
-    end;
+    end
+  else
+      p := 0;
 
   if (ProcessTail) and (Size - p > 0) then
       EncryptTail(Pointer(nativeUInt(sour) + p), Size - p);
@@ -1726,7 +1731,9 @@ begin
         TDES.EncryptTripleDES(d, PDESBlock(nativeUInt(sour) + p)^);
         p := p + 8;
       until p + 8 > Size;
-    end;
+    end
+  else
+      p := 0;
 
   if (ProcessTail) and (Size - p > 0) then
       EncryptTail(Pointer(nativeUInt(sour) + p), Size - p);
@@ -1740,6 +1747,7 @@ var
   d         : TTripleDESContext3Key;
   p         : nativeUInt;
 begin
+  Result := False;
   if Size <= 0 then
       exit;
 
@@ -1754,7 +1762,9 @@ begin
         TDES.EncryptTripleDES3Key(d, PDESBlock(nativeUInt(sour) + p)^);
         p := p + 8;
       until p + 8 > Size;
-    end;
+    end
+  else
+      p := 0;
 
   if (ProcessTail) and (Size - p > 0) then
       EncryptTail(Pointer(nativeUInt(sour) + p), Size - p);
@@ -1782,7 +1792,9 @@ begin
         TBlowfish.EncryptBF(d, PBFBlock(nativeUInt(sour) + p)^, Encrypt);
         p := p + 8;
       until p + 8 > Size;
-    end;
+    end
+  else
+      p := 0;
 
   if (ProcessTail) and (Size - p > 0) then
       EncryptTail(Pointer(nativeUInt(sour) + p), Size - p);
@@ -1811,7 +1823,9 @@ begin
         TLBC.EncryptLBC(d, PLBCBlock(nativeUInt(sour) + p)^);
         p := p + 16;
       until p + 16 > Size;
-    end;
+    end
+  else
+      p := 0;
 
   if (ProcessTail) and (Size - p > 0) then
       EncryptTail(Pointer(nativeUInt(sour) + p), Size - p);
@@ -1837,7 +1851,9 @@ begin
         TLBC.EncryptLQC(k, PLQCBlock(nativeUInt(sour) + p)^, Encrypt);
         p := p + 8;
       until p + 8 > Size;
-    end;
+    end
+  else
+      p := 0;
 
   if (ProcessTail) and (Size - p > 0) then
       EncryptTail(Pointer(nativeUInt(sour) + p), Size - p);
@@ -1943,7 +1959,9 @@ begin
             p := p + 16;
           until p + 16 > Size;
         end;
-    end;
+    end
+  else
+      p := 0;
 
   if (ProcessTail) and (Size - p > 0) then
       EncryptTail(Pointer(nativeUInt(sour) + p), Size - p);
@@ -1980,7 +1998,9 @@ begin
             p := p + 64;
           until p + 64 > Size;
         end;
-    end;
+    end
+  else
+      p := 0;
 
   if (ProcessTail) and (Size - p > 0) then
       EncryptTail(Pointer(nativeUInt(sour) + p), Size - p);
@@ -2022,7 +2042,9 @@ begin
             p := p + 16;
           until p + 16 > Size;
         end;
-    end;
+    end
+  else
+      p := 0;
 
   if (ProcessTail) and (Size - p > 0) then
       EncryptTail(Pointer(nativeUInt(sour) + p), Size - p);
@@ -3097,17 +3119,10 @@ begin
           TCipher.GenerateHashByte(h, sour, Size, sourHash);
           SetLength(destHash, length(sourHash));
           Result := Result and TCipher.HexToBuffer(hValue, destHash[0], length(destHash));
-          if not Result then
-              empty;
           Result := Result and TCipher.CompareHash(sourHash, destHash);
-          if not Result then
-              empty;
         end;
       if not Result then
-        begin
-          empty;
           break;
-        end;
     end;
 
   DisposeObject([ns]);
@@ -3179,7 +3194,6 @@ function GeneratePassword(const ca: TCipherStyleArray; passwd: TPascalString): T
 var
   KeyBuff: TBytes;
   buff   : TBytes;
-  m64    : TMemoryStream64;
 begin
   KeyBuff := passwd.Bytes;
   buff := passwd.Bytes;
@@ -3210,7 +3224,6 @@ function GeneratePassword(const cs: TCipherStyle; passwd: TPascalString): TPasca
 var
   KeyBuff: TBytes;
   buff   : TBytes;
-  m64    : TMemoryStream64;
 begin
   KeyBuff := passwd.Bytes;
   buff := passwd.Bytes;
@@ -3239,7 +3252,6 @@ end;
 
 procedure TestCoreCipher;
 var
-  i         : Integer;
   buffer    : TBytes;
   sour, dest: TMemoryStream64;
   k         : TCipherKeyBuffer;
