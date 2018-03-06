@@ -4,6 +4,7 @@
 { * https://github.com/PassByYou888/ZServer4D                                  * }
 { * https://github.com/PassByYou888/zExpression                                * }
 { * https://github.com/PassByYou888/zTranslate                                 * }
+{ * https://github.com/PassByYou888/zSound                                     * }
 { ****************************************************************************** }
 
 (*
@@ -13,8 +14,6 @@
 *)
 
 unit CoreClasses;
-
-{$I zDefine.inc}
 
 interface
 
@@ -26,6 +25,8 @@ uses SysUtils, Classes, Types, PascalStrings,
   , System.Generics.Collections
   {$ENDIF}
     ;
+
+{$I zDefine.inc}
 
 const
   fmCreate        = Classes.fmCreate;
@@ -268,7 +269,7 @@ end;
 
 procedure FillPtrByte(Dest:Pointer; Count: NativeUInt; const Value: Byte);
 var
-  Index: NativeUInt;
+  Index: NativeInt;
   V    : UInt64;
   PB   : PByte;
   Total: NativeUInt;
