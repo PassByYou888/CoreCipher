@@ -29,7 +29,7 @@ uses Sysutils, Variants, CoreClasses, PascalStrings;
 type
   TCounter = NativeUInt;
 
-  TListBuffer = array of TCoreClassList;
+  TListBuffer = packed array of TCoreClassList;
   PListBuffer = ^TListBuffer;
 
   TDataPos = (dpOnly, dpFirst, dpMiddle, dpLast);
@@ -597,6 +597,7 @@ type
     destructor Destroy; override;
 
     function Add(Value: Cardinal): Integer;
+    procedure AddArray(const Value: array of Cardinal);
     function Delete(Idx: Integer): Integer;
     function DeleteCardinal(Value: Cardinal): Integer;
     procedure Clear;
@@ -624,6 +625,7 @@ type
     destructor Destroy; override;
 
     function Add(Value: Int64): Integer;
+    procedure AddArray(const Value: array of Int64);
     function Delete(Idx: Integer): Integer;
     function DeleteInt64(Value: Int64): Integer;
     procedure Clear;
@@ -655,6 +657,7 @@ type
     destructor Destroy; override;
 
     function Add(Value: NativeInt): Integer;
+    procedure AddArray(const Value: array of NativeInt);
     function Delete(Idx: Integer): Integer;
     function DeleteNativeInt(Value: NativeInt): Integer;
     procedure Clear;
@@ -682,6 +685,7 @@ type
     destructor Destroy; override;
 
     function Add(Value: Integer): Integer;
+    procedure AddArray(const Value: array of Integer);
     function Delete(Idx: Integer): Integer;
     function DeleteInteger(Value: Integer): Integer;
     procedure Clear;
@@ -709,6 +713,7 @@ type
     destructor Destroy; override;
 
     function Add(Value: Double): Integer;
+    procedure AddArray(const Value: array of Double);
     function Delete(Idx: Integer): Integer;
     function DeleteDouble(Value: Double): Integer;
     procedure Clear;
@@ -5170,7 +5175,8 @@ begin
   if TextList.Count > 0 then
     for i := 0 to TextList.Count - 1 do
       begin
-        n := umlTrimSpace(TextList[i]);
+        n.Text := TextList[i];
+        n := umlTrimSpace(n);
 
         if ((n.Exists(':')) or (n.Exists('='))) and (not CharIn(n.First, [':', '='])) then
           begin
@@ -5223,7 +5229,11 @@ begin
   {$IFDEF FPC}
   n.LoadFromStream(Stream);
   {$ELSE}
-  n.LoadFromStream(Stream, TEncoding.UTF8);
+  try
+      n.LoadFromStream(Stream, TEncoding.UTF8);
+  except
+      n.LoadFromStream(Stream);
+  end;
   {$ENDIF}
   DataImport(n);
   DisposeObject(n);
@@ -5342,6 +5352,14 @@ begin
   Result := FList.Add(p);
 end;
 
+procedure TListCardinal.AddArray(const Value: array of Cardinal);
+var
+  i: Integer;
+begin
+  for i := 0 to Length(Value) - 1 do
+      Add(Value[i]);
+end;
+
 function TListCardinal.Delete(Idx: Integer): Integer;
 var
   p: PListCardinalData;
@@ -5433,6 +5451,14 @@ begin
   New(p);
   p^.Data := Value;
   Result := FList.Add(p);
+end;
+
+procedure TListInt64.AddArray(const Value: array of Int64);
+var
+  i: Integer;
+begin
+  for i := 0 to Length(Value) - 1 do
+      Add(Value[i]);
 end;
 
 function TListInt64.Delete(Idx: Integer): Integer;
@@ -5553,6 +5579,14 @@ begin
   Result := FList.Add(p);
 end;
 
+procedure TListNativeInt.AddArray(const Value: array of NativeInt);
+var
+  i: Integer;
+begin
+  for i := 0 to Length(Value) - 1 do
+      Add(Value[i]);
+end;
+
 function TListNativeInt.Delete(Idx: Integer): Integer;
 var
   p: PListNativeIntData;
@@ -5646,6 +5680,14 @@ begin
   Result := FList.Add(p);
 end;
 
+procedure TListInteger.AddArray(const Value: array of Integer);
+var
+  i: Integer;
+begin
+  for i := 0 to Length(Value) - 1 do
+      Add(Value[i]);
+end;
+
 function TListInteger.Delete(Idx: Integer): Integer;
 var
   p: PListIntegerData;
@@ -5737,6 +5779,14 @@ begin
   New(p);
   p^.Data := Value;
   Result := FList.Add(p);
+end;
+
+procedure TListDouble.AddArray(const Value: array of Double);
+var
+  i: Integer;
+begin
+  for i := 0 to Length(Value) - 1 do
+      Add(Value[i]);
 end;
 
 function TListDouble.Delete(Idx: Integer): Integer;
