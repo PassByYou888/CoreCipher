@@ -11,8 +11,8 @@ uses
   ListEngine in '..\..\Source\ListEngine.pas',
   MemoryStream64 in '..\..\Source\MemoryStream64.pas',
   PascalStrings in '..\..\Source\PascalStrings.pas',
-  PasMP in '..\..\Source\PasMP.pas',
-  UnicodeMixedLib in '..\..\Source\UnicodeMixedLib.pas';
+  UnicodeMixedLib in '..\..\Source\UnicodeMixedLib.pas',
+  UPascalStrings in '..\..\Source\UPascalStrings.pas';
 
 {$R *.res}
 
