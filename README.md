@@ -6,12 +6,17 @@ supports platform Win32, Win64, OSX, iOS and Android.
 
 supports parallel encryption/decryption,(little modify and copy PasMP.pas)
 
-PasMP.pas parallel library from https://github.com/BeRo1985/pasmp
-
 
 enjoy.~
 
 # update history
+
+### 2018-5-21
+
+fixed twofish on memory leak
+update Parallel core(fpc required package:MultiThreadProcsLaz)
+added UPascalStrings.pas(fpc on unicode)
+
 
 ### 2018-3-1
 

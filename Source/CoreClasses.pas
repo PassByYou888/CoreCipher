@@ -18,7 +18,14 @@ unit CoreClasses;
 
 interface
 
-uses SysUtils, Classes, Types, Math,
+uses SysUtils, Classes, Types,
+  {$IFDEF parallel}
+  {$IFDEF FPC}
+  mtprocs,
+  {$ELSE}
+  Threading,
+  {$ENDIF FPC}
+  {$ENDIF parallel}
   PascalStrings,
   SyncObjs
   {$IFDEF FPC}
@@ -26,7 +33,7 @@ uses SysUtils, Classes, Types, Math,
   {$ELSE}
   , System.Generics.Collections
   {$ENDIF}
-    ;
+  ,Math;
 
 {$I zDefine.inc}
 
@@ -131,12 +138,11 @@ type
   TCoreClassForObjectList = array of TCoreClassObject;
   PCoreClassForObjectList = ^TCoreClassForObjectList;
 
-  TCoreClassSortCompare = function(Item1, Item2: Pointer): Integer;
-
   TCoreClassListForObj_ = class(System.Generics.Collections.TList<TCoreClassObject>)
   end;
 
   TCoreClassListForObj = class(TCoreClassListForObj_)
+    function ListData: PCoreClassForObjectList;
   end;
 
   {$ENDIF}
@@ -173,6 +179,9 @@ procedure DisposeObject(const objs: array of TObject); overload;
 procedure FreeObject(const obj: TObject); overload; {$IFDEF INLINE_ASM} inline; {$ENDIF}
 procedure FreeObject(const objs: array of TObject); overload;
 
+procedure LockID(const ID:Byte);
+procedure UnLockID(const ID:Byte);
+
 procedure LockObject(obj:TObject);
 procedure UnLockObject(obj:TObject);
 
@@ -197,6 +206,14 @@ function ROR8(const Value:Byte; Shift: Byte): Byte; {$IFDEF INLINE_ASM} inline; 
 function ROR16(const Value: Word; Shift: Byte): Word; {$IFDEF INLINE_ASM} inline; {$ENDIF}
 function ROR32(const Value: Cardinal; Shift: Byte): Cardinal; {$IFDEF INLINE_ASM} inline; {$ENDIF}
 function ROR64(const Value: UInt64; Shift: Byte): UInt64; {$IFDEF INLINE_ASM} inline; {$ENDIF}
+
+procedure Swap(var v1,v2:Integer); overload; {$IFDEF INLINE_ASM} inline; {$ENDIF}
+procedure Swap(var v1,v2:Int64); overload; {$IFDEF INLINE_ASM} inline; {$ENDIF}
+procedure Swap(var v1,v2:UInt64); overload; {$IFDEF INLINE_ASM} inline; {$ENDIF}
+procedure Swap(var v1,v2:SystemString); overload; {$IFDEF INLINE_ASM} inline; {$ENDIF}
+procedure Swap(var v1,v2:Single); overload; {$IFDEF INLINE_ASM} inline; {$ENDIF}
+procedure Swap(var v1,v2:Double); overload; {$IFDEF INLINE_ASM} inline; {$ENDIF}
+procedure Swap(var v1,v2:Pointer); overload; {$IFDEF INLINE_ASM} inline; {$ENDIF}
 
 threadvar MHGlobalHookEnabled: Boolean;
 
@@ -258,6 +275,35 @@ begin
 end;
 
 {$I CoreAtomic.inc}
+
+var
+  LockIDBuff: packed array [0..$FF] of TCoreClassPersistent;
+
+procedure InitLockIDBuff;
+var
+  i: Byte;
+begin
+  for i := 0 to $FF do
+      LockIDBuff[i] := TCoreClassPersistent.Create;
+end;
+
+procedure FreeLockIDBuff;
+var
+  i: Integer;
+begin
+  for i := 0 to $FF do
+      DisposeObject(LockIDBuff[i]);
+end;
+
+procedure LockID(const ID: Byte);
+begin
+  LockObject(LockIDBuff[ID]);
+end;
+
+procedure UnLockID(const ID: Byte);
+begin
+  UnLockObject(LockIDBuff[ID]);
+end;
 
 procedure LockObject(obj:TObject);
 begin
@@ -413,6 +459,69 @@ begin
   Result := UInt64((Value shr Shift) or (Value shl (64 - Shift)));
 end;
 
+procedure Swap(var v1, v2: Integer);
+var
+  V: Integer;
+begin
+  V := v1;
+  v1 := v2;
+  v2 := V;
+end;
+
+procedure Swap(var v1, v2: Int64);
+var
+  V: Int64;
+begin
+  V := v1;
+  v1 := v2;
+  v2 := V;
+end;
+
+procedure Swap(var v1, v2: UInt64);
+var
+  V: UInt64;
+begin
+  V := v1;
+  v1 := v2;
+  v2 := V;
+end;
+
+procedure Swap(var v1, v2: SystemString);
+var
+  V: SystemString;
+begin
+  V := v1;
+  v1 := v2;
+  v2 := V;
+end;
+
+procedure Swap(var v1, v2: Single);
+var
+  V: Single;
+begin
+  V := v1;
+  v1 := v2;
+  v2 := V;
+end;
+
+procedure Swap(var v1, v2: Double);
+var
+  V: Double;
+begin
+  V := v1;
+  v1 := v2;
+  v2 := V;
+end;
+
+procedure Swap(var v1, v2: Pointer);
+var
+  V: Pointer;
+begin
+  V := v1;
+  v1 := v2;
+  v2 := V;
+end;
+
 {$IFDEF FPC}
 
 
@@ -475,16 +584,23 @@ begin
   Result := @(inherited List);
 end;
 
+function TCoreClassListForObj.ListData: PCoreClassForObjectList;
+begin
+  Result := @(inherited List);
+end;
+
 {$ENDIF}
 
 initialization
   InitCriticalLock;
+  InitLockIDBuff;
   MHGlobalHookEnabled := True;
 
   // float check
   SetExceptionMask([exInvalidOp, exDenormalized, exZeroDivide, exOverflow, exUnderflow, exPrecision]);
 finalization
   FreeCriticalLock;
+  FreeLockIDBuff;
   MHGlobalHookEnabled := False;
 end.
 
