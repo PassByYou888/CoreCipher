@@ -13,9 +13,9 @@ enjoy.~
 
 ### 2018-5-21
 
-fixed twofish on memory leak
-update Parallel core(fpc required package:MultiThreadProcsLaz)
-added UPascalStrings.pas(fpc on unicode)
+- fixed twofish on memory leak
+- update Parallel core(fpc required package:MultiThreadProcsLaz)
+- added UPascalStrings.pas(fpc on unicode)
 
 
 ### 2018-3-1
