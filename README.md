@@ -11,6 +11,15 @@ enjoy.~
 
 # update history
 
+### 2018-7-6
+
+- update the name rules of the Library
+- Support for fpc/86/64 platform, all base libraries support for Linux.
+- power support for the FPC compiler 3.1.1
+- newed Big/Little Endian order support
+- fixing the problem of using 32 bit FPC compiler to for with Int64
+- fixed string the FPC compiler runs on Linux.
+
 ### 2018-5-21
 
 - fixed twofish on memory leak

@@ -4,11 +4,11 @@
     <PathDelim Value="\"/>
     <Version Value="10"/>
     <BuildModes Active="Default"/>
-    <Units Count="5">
+    <Units Count="6">
       <Unit0>
         <Filename Value="FPCperformanceTest.lpr"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="3"/>
+        <EditorIndex Value="4"/>
         <CursorPos X="40" Y="10"/>
         <UsageCount Value="20"/>
         <Loaded Value="True"/>
@@ -20,7 +20,6 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="Unit1"/>
-        <IsVisibleTab Value="True"/>
         <CursorPos X="41" Y="27"/>
         <UsageCount Value="20"/>
         <Loaded Value="True"/>
@@ -29,26 +28,34 @@
       <Unit2>
         <Filename Value="..\..\Source\DoStatusIO.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="1"/>
+        <EditorIndex Value="2"/>
         <UsageCount Value="20"/>
         <Loaded Value="True"/>
       </Unit2>
       <Unit3>
         <Filename Value="..\..\Source\CoreCipher.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="2"/>
+        <EditorIndex Value="3"/>
         <CursorPos X="87" Y="17"/>
         <UsageCount Value="20"/>
         <Loaded Value="True"/>
       </Unit3>
       <Unit4>
         <Filename Value="..\..\Source\Fast_MD5.pas"/>
-        <EditorIndex Value="4"/>
+        <EditorIndex Value="5"/>
         <UsageCount Value="10"/>
         <Loaded Value="True"/>
       </Unit4>
+      <Unit5>
+        <Filename Value="..\..\Source\CoreClasses.pas"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="1"/>
+        <CursorPos X="19" Y="16"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit5>
     </Units>
-    <JumpHistory Count="8" HistoryIndex="7">
+    <JumpHistory Count="9" HistoryIndex="8">
       <Position1>
         <Filename Value="unit1.pas"/>
         <Caret Line="26" Column="39"/>
@@ -79,6 +86,10 @@
         <Filename Value="unit1.pas"/>
         <Caret Line="5"/>
       </Position8>
+      <Position9>
+        <Filename Value="unit1.pas"/>
+        <Caret Line="27" Column="41"/>
+      </Position9>
     </JumpHistory>
   </ProjectSession>
 </CONFIG>
