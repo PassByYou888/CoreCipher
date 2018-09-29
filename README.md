@@ -2,9 +2,35 @@
 
 CoreCipher is a Delphi and FPC library for cryptography.  It provides support for RC6,TwoFish,AES, DES, 3DES, Blowfish, MD5,SHA1,MixFunctions,LSC,LQC, all work in parallel and mobile platform!
 
-supports platform Win32, Win64, OSX, iOS and Android.
+** supports parallel encryption/decryption **
 
-supports parallel encryption/decryption
+## multi platform supported:，test with Delphi 10.2 upate 1 Tokyo and FPC 3.0.4 with Lazarus1.8
+
+- Windows: delphi-CrossSocket(C/S OK), delphi-DIOCP(C/S OK), delphi-ICS(C/S OK), delphi-Indy(C/S OK),delphi+fpc Synapse(C/S OK)
+- Android:Indy(C/S OK), CrossSocket(Only Client)
+- IOS Device: Indy(C/S OK), CrossSocket(Only Client)
+- IOS Simulaor: n/a
+- OSX: Indy(C/S OK)，ICS(no test), CrossSocket(C/S OK)
+- Ubuntu16.04 x64 server: Indy(C/S OK), CrossSocket(C/S OK)
+- Ubuntu18.04 x86+x64 Desktop:only fpc3.0.4 Synapse(C/S OK)
+- Ubuntu18.04 x86+x64 Server:only fpc3.0.4 Synapse(C/S OK) 
+- Ubuntu18.04 arm32+arm neon Server:only fpc3.0.4 Synapse(C/S OK)
+- Ubuntu18.04 arm32+arm neon desktop:only fpc3.0.4 compile ok,no test on run.  
+- Ubuntu16.04 Mate arm32 desktop:only fpc3.0.4 compile ok, test passed  
+- Raspberry Pi 3 Debian linux armv7 desktop,only fpc 3.0.4,test passed.
+- wince(x86),windows 10 IOT,only fpc 3.3.1,test passed.
+- wince(arm eabi hard flaot),windows 10 IOT,only fpc 3.3.1,test passed.
+
+## multi cpu architectures supported，test with Delphi 10.2 upate 1 Tokyo and FPC 3.0.4 with Lazarus1.8
+
+- MIPS(fpc-little endian), soft float, test pass on QEMU 
+- intel X86(fpc-x86), soft float
+- intel X86(delphi+fpc), hard float,ATHLON64,COREI,COREAVX,COREAVX2
+- intel X64(fpc-x86_64), soft float
+- intel X64(delphi+fpc), hard float,ATHLON64,COREI,COREAVX,COREAVX2
+- ARM(fpc-arm32-eabi, hard float):ARMV3,ARMV4,ARMV4T,ARMV5,ARMV5T,ARMV5TE,ARMV5TEJ,ARMV6,ARMV6K,ARMV6T2,ARMV6Z,ARMV6M,ARMV7,ARMV7A,ARMV7R,ARMV7M,ARMV7EM
+- ARM(fpc-arm64-eabi, hard float):ARMV8，aarch64
+
 
 
 enjoy.~
