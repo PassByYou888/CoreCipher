@@ -2,9 +2,9 @@
 
 CoreCipher is a Delphi and FPC library for cryptography.  It provides support for RC6,TwoFish,AES, DES, 3DES, Blowfish, MD5,SHA1,MixFunctions,LSC,LQC, all work in parallel and mobile platform!
 
-** supports parallel encryption/decryption **
+**supports parallel encryption/decryption**
 
-## multi platform supported:，test with Delphi 10.2 upate 1 Tokyo and FPC 3.0.4 with Lazarus1.8
+### multi platform supported:，test with Delphi 10.2 upate 2 and FPC 3.0.4
 
 - Windows: delphi-CrossSocket(C/S OK), delphi-DIOCP(C/S OK), delphi-ICS(C/S OK), delphi-Indy(C/S OK),delphi+fpc Synapse(C/S OK)
 - Android:Indy(C/S OK), CrossSocket(Only Client)
@@ -18,10 +18,9 @@ CoreCipher is a Delphi and FPC library for cryptography.  It provides support fo
 - Ubuntu18.04 arm32+arm neon desktop:only fpc3.0.4 compile ok,no test on run.  
 - Ubuntu16.04 Mate arm32 desktop:only fpc3.0.4 compile ok, test passed  
 - Raspberry Pi 3 Debian linux armv7 desktop,only fpc 3.0.4,test passed.
-- wince(x86),windows 10 IOT,only fpc 3.3.1,test passed.
 - wince(arm eabi hard flaot),windows 10 IOT,only fpc 3.3.1,test passed.
 
-## multi cpu architectures supported，test with Delphi 10.2 upate 1 Tokyo and FPC 3.0.4 with Lazarus1.8
+### multi cpu architectures supported，test with Delphi 10.2 upate 2 and FPC 3.0.4
 
 - MIPS(fpc-little endian), soft float, test pass on QEMU 
 - intel X86(fpc-x86), soft float
