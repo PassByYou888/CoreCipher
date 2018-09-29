@@ -43,7 +43,7 @@ begin
   DisposeObject(CriticalList);
 end;
 
-procedure GetCriticalLock(Obj: TObject; var output: PCriticalLock);
+procedure GetCriticalLock(const Obj: TObject; var output: PCriticalLock);
 var
   i, pi: Integer;
   p: PCriticalLock;
@@ -68,7 +68,7 @@ begin
                 p := PCriticalLock(CriticalList[i]);
                 pi := i;
               end;
-            Inc(i);
+            inc(i);
           end;
       end;
     if output = nil then
@@ -98,10 +98,7 @@ procedure _LockCriticalObj(Obj: TObject);
 var
   p: PCriticalLock;
 begin
-  if Obj = nil then
-      GetCriticalLock(CoreCritical, p)
-  else
-      GetCriticalLock(Obj, p);
+  GetCriticalLock(Obj, p);
   p^.Critical.Acquire;
 end;
 
@@ -109,10 +106,9 @@ procedure _UnLockCriticalObj(Obj: TObject);
 var
   p: PCriticalLock;
 begin
-  if Obj = nil then
-      GetCriticalLock(CoreCritical, p)
-  else
-      GetCriticalLock(Obj, p);
+  GetCriticalLock(Obj, p);
   p^.Obj := nil;
   p^.Critical.Release;
 end; 
+ 
+ 

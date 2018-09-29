@@ -8,10 +8,9 @@
       <Unit0>
         <Filename Value="FPCperformanceTest.lpr"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="4"/>
+        <EditorIndex Value="-1"/>
         <CursorPos X="40" Y="10"/>
         <UsageCount Value="20"/>
-        <Loaded Value="True"/>
       </Unit0>
       <Unit1>
         <Filename Value="unit1.pas"/>
@@ -20,7 +19,7 @@
         <HasResources Value="True"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="Unit1"/>
-        <CursorPos X="41" Y="27"/>
+        <CursorPos X="9" Y="11"/>
         <UsageCount Value="20"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
@@ -28,68 +27,45 @@
       <Unit2>
         <Filename Value="..\..\Source\DoStatusIO.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="2"/>
+        <EditorIndex Value="-1"/>
         <UsageCount Value="20"/>
-        <Loaded Value="True"/>
       </Unit2>
       <Unit3>
         <Filename Value="..\..\Source\CoreCipher.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="3"/>
-        <CursorPos X="87" Y="17"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="1"/>
+        <TopLine Value="31"/>
+        <CursorPos X="66" Y="43"/>
         <UsageCount Value="20"/>
         <Loaded Value="True"/>
       </Unit3>
       <Unit4>
         <Filename Value="..\..\Source\Fast_MD5.pas"/>
-        <EditorIndex Value="5"/>
+        <EditorIndex Value="-1"/>
         <UsageCount Value="10"/>
-        <Loaded Value="True"/>
       </Unit4>
       <Unit5>
         <Filename Value="..\..\Source\CoreClasses.pas"/>
-        <IsVisibleTab Value="True"/>
-        <EditorIndex Value="1"/>
-        <CursorPos X="19" Y="16"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="51"/>
+        <CursorPos X="36" Y="20"/>
         <UsageCount Value="10"/>
-        <Loaded Value="True"/>
       </Unit5>
     </Units>
-    <JumpHistory Count="9" HistoryIndex="8">
+    <JumpHistory Count="3" HistoryIndex="2">
       <Position1>
         <Filename Value="unit1.pas"/>
         <Caret Line="26" Column="39"/>
       </Position1>
       <Position2>
-        <Filename Value="FPCperformanceTest.lpr"/>
-        <Caret Line="10" Column="40"/>
-      </Position2>
-      <Position3>
-        <Filename Value="..\..\Source\Fast_MD5.pas"/>
-        <Caret Line="234" TopLine="171"/>
-      </Position3>
-      <Position4>
-        <Filename Value="..\..\Source\Fast_MD5.pas"/>
-        <Caret Line="237" Column="5" TopLine="171"/>
-      </Position4>
-      <Position5>
-        <Filename Value="..\..\Source\Fast_MD5.pas"/>
-      </Position5>
-      <Position6>
-        <Filename Value="..\..\Source\Fast_MD5.pas"/>
-        <Caret Line="237" Column="5" TopLine="171"/>
-      </Position6>
-      <Position7>
-        <Filename Value="..\..\Source\Fast_MD5.pas"/>
-      </Position7>
-      <Position8>
         <Filename Value="unit1.pas"/>
         <Caret Line="5"/>
-      </Position8>
-      <Position9>
+      </Position2>
+      <Position3>
         <Filename Value="unit1.pas"/>
         <Caret Line="27" Column="41"/>
-      </Position9>
+      </Position3>
     </JumpHistory>
   </ProjectSession>
 </CONFIG>

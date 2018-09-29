@@ -11,6 +11,7 @@
   {$MODE objfpc}
   {$MODESWITCH AdvancedRecords}
   {$NOTES OFF}
+  {$STACKFRAMES OFF}
 
   {$DEFINE LITTLE_ENDIAN}
   {$UNDEF BIG_ENDIAN}
@@ -27,8 +28,11 @@
   {$DEFINE OptimizationMemoryStreamMD5}
   {$DEFINE CriticalSimulateAtomic}
   {$DEFINE release}
+  {$UNDEF debug}
   {$DEFINE INLINE_ASM}
-{$ELSE}
+  {$R-} { range check }
+  {$O+} { optimization }
+{$ELSE FPC}
   {$DEFINE LITTLE_ENDIAN}
   {$UNDEF BIG_ENDIAN}
 
@@ -55,21 +59,46 @@
 
   {$IFDEF release}
     {$DEFINE INLINE_ASM}
+    {$R-} { range check }
+    {$I-} { Input output checking }
+    {$IFDEF MSWINDOWS}
+      {$O+} { optimization }
+    {$ELSE MSWINDOWS}
+      {$O-} { optimization }
+    {$ENDIF MSWINDOWS}
   {$ELSE}
     {$UNDEF INLINE_ASM}
+    {$R-} { range check }
+    {$I-} { Input output checking }
+    {$O-} { optimization }
   {$ENDIF}
 
-{$ENDIF}
+  {$IF Defined(Android) or Defined(IOS)}
+    {$DEFINE NatTunnel_On_Indy}
+    {$DEFINE HostQuery_On_Indy}
+  {$ELSE}
+    // xNat Physics interface
+    // {$DEFINE NatTunnel_On_ICS}
+    {$DEFINE NatTunnel_On_CrossSocket}
+    // {$DEFINE NatTunnel_On_DIOCP}
+    // {$DEFINE NatTunnel_On_Indy}
+
+
+    // HostQuery Physics interface
+    // {$DEFINE HostQuery_On_ICS}
+    {$DEFINE HostQuery_On_CrossSocket}
+    // {$DEFINE HostQuery_On_DIOCP}
+    // {$DEFINE HostQuery_On_Indy}
+  {$IFEND}
+{$ENDIF FPC}
 
 {$WARNINGS OFF}
 {$HINTS OFF}
 {$H+} { long string }
 {$A+} { Word Align Data }
-{$O-} { optimization }
 {$Q-} { Overflow checking }
 {$B-} { Complete boolean evaluation }
-{$I+} { Input output checking }
-{$R-} { range check }
+{$J+} { Writeable typed constants }
 
 {$UNDEF CPU64}
 

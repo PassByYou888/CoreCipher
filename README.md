@@ -11,6 +11,11 @@ enjoy.~
 
 # update history
 
+### 2018-9-29
+
+- fixed rc6 on freepascal for IOT
+- IOT power on FPC support 
+
 ### 2018-7-6
 
 - update the name rules of the Library
