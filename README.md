@@ -6,17 +6,18 @@ CoreCipher is a Delphi and FPC library for cryptography.  It provides support fo
 
 ### multi platform supported:，test with Delphi 10.2 upate 2 and FPC 3.0.4
 
-- Windows: delphi-CrossSocket(C/S OK), delphi-DIOCP(C/S OK), delphi-ICS(C/S OK), delphi-Indy(C/S OK),delphi+fpc Synapse(C/S OK)
-- Android:Indy(C/S OK), CrossSocket(Only Client)
-- IOS Device: Indy(C/S OK), CrossSocket(Only Client)
-- IOS Simulaor: n/a
-- OSX: Indy(C/S OK)，ICS(no test), CrossSocket(C/S OK)
-- Ubuntu16.04 x64 server: Indy(C/S OK), CrossSocket(C/S OK)
-- Ubuntu18.04 x86+x64 Desktop:only fpc3.0.4 Synapse(C/S OK)
-- Ubuntu18.04 x86+x64 Server:only fpc3.0.4 Synapse(C/S OK) 
-- Ubuntu18.04 arm32+arm neon Server:only fpc3.0.4 Synapse(C/S OK)
-- Ubuntu18.04 arm32+arm neon desktop:only fpc3.0.4 compile ok,no test on run.  
-- Ubuntu16.04 Mate arm32 desktop:only fpc3.0.4 compile ok, test passed  
+- Windows x86+x64 
+- Android pad with armv8 aarch64
+- Android mobile with armv6 or last
+- IOS Device armv7(ip4)+armv8(ipad pro,iphone5s or last aarch64)
+- IOS Simulaor:n/a
+- OSX
+- Ubuntu16.04 x64 server
+- Ubuntu18.04 x86+x64 Desktop
+- Ubuntu18.04 x86+x64 Server 
+- Ubuntu18.04 arm32+arm neon Server
+- Ubuntu18.04 arm32+arm neon desktop  
+- Ubuntu16.04 Mate arm32 desktop  
 - Raspberry Pi 3 Debian linux armv7 desktop,only fpc 3.0.4,test passed.
 - wince(arm eabi hard flaot),windows 10 IOT,only fpc 3.3.1,test passed.
 
