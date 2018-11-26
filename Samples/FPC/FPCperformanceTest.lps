@@ -33,10 +33,9 @@
       <Unit3>
         <Filename Value="..\..\Source\CoreCipher.pas"/>
         <IsPartOfProject Value="True"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="1"/>
         <TopLine Value="31"/>
-        <CursorPos X="66" Y="43"/>
+        <CursorPos X="41" Y="42"/>
         <UsageCount Value="20"/>
         <Loaded Value="True"/>
       </Unit3>
@@ -47,13 +46,15 @@
       </Unit4>
       <Unit5>
         <Filename Value="..\..\Source\CoreClasses.pas"/>
-        <EditorIndex Value="-1"/>
-        <TopLine Value="51"/>
-        <CursorPos X="36" Y="20"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="2"/>
+        <TopLine Value="14"/>
+        <CursorPos X="70" Y="39"/>
         <UsageCount Value="10"/>
+        <Loaded Value="True"/>
       </Unit5>
     </Units>
-    <JumpHistory Count="3" HistoryIndex="2">
+    <JumpHistory Count="4" HistoryIndex="3">
       <Position1>
         <Filename Value="unit1.pas"/>
         <Caret Line="26" Column="39"/>
@@ -66,6 +67,10 @@
         <Filename Value="unit1.pas"/>
         <Caret Line="27" Column="41"/>
       </Position3>
+      <Position4>
+        <Filename Value="..\..\Source\CoreCipher.pas"/>
+        <Caret Line="42" Column="41" TopLine="31"/>
+      </Position4>
     </JumpHistory>
   </ProjectSession>
 </CONFIG>
