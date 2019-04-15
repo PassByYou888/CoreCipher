@@ -1,13 +1,20 @@
 { ****************************************************************************** }
-{ * Status IO support, writen by QQ 600585@qq.com                              * }
-{ * https://github.com/PassByYou888/CoreCipher                                 * }
+{ * Status IO          writen by QQ 600585@qq.com                              * }
+{ * https://zpascal.net                                                        * }
+{ * https://github.com/PassByYou888/zAI                                        * }
 { * https://github.com/PassByYou888/ZServer4D                                  * }
-{ * https://github.com/PassByYou888/zExpression                                * }
-{ * https://github.com/PassByYou888/zTranslate                                 * }
-{ * https://github.com/PassByYou888/zSound                                     * }
-{ * https://github.com/PassByYou888/zAnalysis                                  * }
-{ * https://github.com/PassByYou888/zGameWare                                  * }
+{ * https://github.com/PassByYou888/PascalString                               * }
 { * https://github.com/PassByYou888/zRasterization                             * }
+{ * https://github.com/PassByYou888/CoreCipher                                 * }
+{ * https://github.com/PassByYou888/zSound                                     * }
+{ * https://github.com/PassByYou888/zChinese                                   * }
+{ * https://github.com/PassByYou888/zExpression                                * }
+{ * https://github.com/PassByYou888/zGameWare                                  * }
+{ * https://github.com/PassByYou888/zAnalysis                                  * }
+{ * https://github.com/PassByYou888/FFMPEG-Header                              * }
+{ * https://github.com/PassByYou888/zTranslate                                 * }
+{ * https://github.com/PassByYou888/InfiniteIoT                                * }
+{ * https://github.com/PassByYou888/FastMD5                                    * }
 { ****************************************************************************** }
 
 unit DoStatusIO;
@@ -197,7 +204,7 @@ end;
 
 procedure DoStatus(const v: TMD5);
 begin
-  DoStatus(umlMD52String(v).Text);
+  DoStatus(umlMD5ToString(v).Text);
 end;
 
 type
@@ -209,9 +216,8 @@ type
 
   PDoStatusData = ^TDoStatusData;
 
-threadvar StatusActive: Boolean;
-
 var
+  StatusActive: Boolean;
   HookDoStatus: TCoreClassList;
   ReservedStatus: TCoreClassList;
   LastDoStatusNoLn: TPascalString;
@@ -308,6 +314,8 @@ procedure CheckDoStatus(th: TCoreClassThread);
 var
   i: Integer;
 begin
+  if StatusCritical = nil then
+      exit;
   if (th = nil) or (th.ThreadID <> MainThreadID) then
       exit;
   StatusCritical.Acquire;
@@ -441,6 +449,7 @@ begin
 
   StatusActive := True;
   LastDoStatusNoLn := '';
+  StatusCritical := nil;
 end;
 
 initialization
