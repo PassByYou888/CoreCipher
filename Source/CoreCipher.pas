@@ -446,7 +446,7 @@ type
     class function EncryptBufferCBC(cs: TCipherSecurity; sour: Pointer; Size: NativeInt; KeyBuff: PCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean;
   end;
 
-{$IFDEF parallel}
+{$IFDEF Parallel}
 
   TParallelCipher = class(TCoreClassObject)
   private type
@@ -509,8 +509,8 @@ type
 var
   { system default cbc refrence }
   SystemCBC: TBytes;
-{$IFDEF parallel}
-  { system default parallel depth }
+{$IFDEF Parallel}
+  { system default Parallel depth }
   DefaultParallelDepth: Integer;     // default cpucount * 2
   ParallelTriggerCondition: Integer; // default 1024
 {$ENDIF}
@@ -520,7 +520,7 @@ procedure InitSysCBCAndDefaultKey(rand: Int64);
 function SequEncryptWithDirect(const cs: TCipherSecurity; sour: Pointer; Size: NativeInt; const key: TCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean; overload;
 function SequEncryptWithDirect(const ca: TCipherSecurityArray; sour: Pointer; Size: NativeInt; const key: TCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean; overload;
 
-{$IFDEF parallel}
+{$IFDEF Parallel}
 function SequEncryptWithParallel(const cs: TCipherSecurity; sour: Pointer; Size: NativeInt; const key: TCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean; overload;
 function SequEncryptWithParallel(const ca: TCipherSecurityArray; sour: Pointer; Size: NativeInt; const key: TCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean; overload;
 {$ENDIF}
@@ -531,7 +531,7 @@ function SequEncrypt(const cs: TCipherSecurity; sour: Pointer; Size: NativeInt; 
 function SequEncryptCBCWithDirect(const cs: TCipherSecurity; sour: Pointer; Size: NativeInt; const key: TCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean; overload;
 function SequEncryptCBCWithDirect(const ca: TCipherSecurityArray; sour: Pointer; Size: NativeInt; const key: TCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean; overload;
 
-{$IFDEF parallel}
+{$IFDEF Parallel}
 function SequEncryptCBCWithParallel(const cs: TCipherSecurity; sour: Pointer; Size: NativeInt; const key: TCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean; overload;
 function SequEncryptCBCWithParallel(const ca: TCipherSecurityArray; sour: Pointer; Size: NativeInt; const key: TCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean; overload;
 {$ENDIF}
@@ -1776,15 +1776,7 @@ type
 
 implementation
 
-uses DoStatusIO,
-{$IFDEF parallel}
-{$IFDEF FPC}
-  mtprocs,
-{$ELSE parallel}
-  Threading,
-{$ENDIF FPC}
-{$ENDIF parallel}
-  SyncObjs;
+uses DoStatusIO;
 
 const
   { Blowfish lookup tables }
@@ -3531,7 +3523,7 @@ begin
     end;
 end;
 
-{$IFDEF parallel}
+{$IFDEF Parallel}
 
 
 procedure TParallelCipher.DES64_Parallel(Job, buff, key: Pointer; Size: NativeInt);
@@ -3757,7 +3749,7 @@ procedure TParallelCipher.RunParallel(const JobData: PParallelCipherJobData; con
 var
   StepTotal, stepW: Integer;
 {$IFDEF FPC}
-  procedure Nested_ParallelFor(pass: PtrInt; Data: Pointer; Item: TMultiThreadProcItem);
+  procedure Nested_ParallelFor(pass: Integer);
   var
     w: Integer;
   begin
@@ -3784,9 +3776,9 @@ begin
       inc(StepTotal);
 
 {$IFDEF FPC}
-  ProcThreadPool.DoParallelLocalProc(@Nested_ParallelFor, 0, StepTotal - 1);
+  FPCParallelFor(@Nested_ParallelFor, 0, StepTotal - 1);
 {$ELSE FPC}
-  TParallel.for(0, StepTotal - 1, procedure(pass: Integer)
+  DelphiParallelFor(0, StepTotal - 1, procedure(pass: Integer)
     var
       w: Integer;
     begin
@@ -4376,8 +4368,8 @@ var
   i: Integer;
   Seed: TInt64;
 begin
-{$IFDEF parallel}
-  { system default parallel depth }
+{$IFDEF Parallel}
+  { system default Parallel depth }
   DefaultParallelDepth := CPUCount * 2;
   ParallelTriggerCondition := 1024;
 {$ENDIF}
@@ -4413,7 +4405,7 @@ begin
     end;
 end;
 
-{$IFDEF parallel}
+{$IFDEF Parallel}
 
 
 function SequEncryptWithParallel(const cs: TCipherSecurity; sour: Pointer; Size: NativeInt; const key: TCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean;
@@ -4451,7 +4443,7 @@ end;
 
 function SequEncrypt(const ca: TCipherSecurityArray; sour: Pointer; Size: NativeInt; const key: TCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean;
 begin
-{$IFDEF parallel}
+{$IFDEF Parallel}
   if Size >= ParallelTriggerCondition then
       Result := SequEncryptWithParallel(ca, sour, Size, key, Encrypt, ProcessTail)
   else
@@ -4461,7 +4453,7 @@ end;
 
 function SequEncrypt(const cs: TCipherSecurity; sour: Pointer; Size: NativeInt; const key: TCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean;
 begin
-{$IFDEF parallel}
+{$IFDEF Parallel}
   if Size >= ParallelTriggerCondition then
       Result := SequEncryptWithParallel(cs, sour, Size, key, Encrypt, ProcessTail)
   else
@@ -4495,7 +4487,7 @@ begin
     end;
 end;
 
-{$IFDEF parallel}
+{$IFDEF Parallel}
 
 
 function SequEncryptCBCWithParallel(const cs: TCipherSecurity; sour: Pointer; Size: NativeInt; const key: TCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean;
@@ -4533,7 +4525,7 @@ end;
 
 function SequEncryptCBC(const ca: TCipherSecurityArray; sour: Pointer; Size: NativeInt; const key: TCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean;
 begin
-{$IFDEF parallel}
+{$IFDEF Parallel}
   if Size >= ParallelTriggerCondition then
       Result := SequEncryptCBCWithParallel(ca, sour, Size, key, Encrypt, ProcessTail)
   else
@@ -4543,7 +4535,7 @@ end;
 
 function SequEncryptCBC(const cs: TCipherSecurity; sour: Pointer; Size: NativeInt; const key: TCipherKeyBuffer; Encrypt, ProcessTail: Boolean): Boolean;
 begin
-{$IFDEF parallel}
+{$IFDEF Parallel}
   if Size >= ParallelTriggerCondition then
       Result := SequEncryptCBCWithParallel(cs, sour, Size, key, Encrypt, ProcessTail)
   else
@@ -4937,7 +4929,7 @@ var
   hs: THashSecurity;
   hByte: TBytes;
 
-{$IFDEF parallel}
+{$IFDEF Parallel}
   Parallel: TParallelCipher;
 {$ENDIF}
   ps: TListPascalString;
@@ -5032,7 +5024,7 @@ begin
 
   sourHash := TCipher.GenerateSHA1Hash(sour.Memory, sour.Size);
 
-{$IFDEF parallel}
+{$IFDEF Parallel}
   DoStatus(#13#10'Parallel cipher performance test');
 
   for cs in TCipher.AllCipher do
@@ -5049,13 +5041,13 @@ begin
       d := GetTimeTick;
 
       if not Parallel.EncryptBufferCBC(cs, Dest.Memory, Dest.Size, @k, True, True) then
-          DoStatus('%s: parallel encode failed', [GetEnumName(TypeInfo(TCipherSecurity), Integer(cs))]);
+          DoStatus('%s: Parallel encode failed', [GetEnumName(TypeInfo(TCipherSecurity), Integer(cs))]);
       if not Parallel.EncryptBufferCBC(cs, Dest.Memory, Dest.Size, @k, False, True) then
-          DoStatus('%s: parallel decode failed', [GetEnumName(TypeInfo(TCipherSecurity), Integer(cs))]);
-      DoStatus('%s - parallel performance:%dms', [GetEnumName(TypeInfo(TCipherSecurity), Integer(cs)), GetTimeTick - d]);
+          DoStatus('%s: Parallel decode failed', [GetEnumName(TypeInfo(TCipherSecurity), Integer(cs))]);
+      DoStatus('%s - Parallel performance:%dms', [GetEnumName(TypeInfo(TCipherSecurity), Integer(cs)), GetTimeTick - d]);
 
       if not TCipher.CompareHash(TCipher.GenerateSHA1Hash(Dest.Memory, Dest.Size), sourHash) then
-          DoStatus('%s parallel hash error!', [GetEnumName(TypeInfo(TCipherSecurity), Integer(cs))]);
+          DoStatus('%s Parallel hash error!', [GetEnumName(TypeInfo(TCipherSecurity), Integer(cs))]);
 
       DisposeObject(Parallel);
     end;
@@ -5074,13 +5066,13 @@ begin
       d := GetTimeTick;
 
       if not TCipher.EncryptBufferCBC(cs, Dest.Memory, Dest.Size, @k, True, True) then
-          DoStatus('%s: normal 2 parallel encode failed', [GetEnumName(TypeInfo(TCipherSecurity), Integer(cs))]);
+          DoStatus('%s: normal 2 Parallel encode failed', [GetEnumName(TypeInfo(TCipherSecurity), Integer(cs))]);
       if not Parallel.EncryptBufferCBC(cs, Dest.Memory, Dest.Size, @k, False, True) then
-          DoStatus('%s: normal 2 parallel decode failed', [GetEnumName(TypeInfo(TCipherSecurity), Integer(cs))]);
-      DoStatus('%s - normal 2 parallel performance:%dms', [GetEnumName(TypeInfo(TCipherSecurity), Integer(cs)), GetTimeTick - d]);
+          DoStatus('%s: normal 2 Parallel decode failed', [GetEnumName(TypeInfo(TCipherSecurity), Integer(cs))]);
+      DoStatus('%s - normal 2 Parallel performance:%dms', [GetEnumName(TypeInfo(TCipherSecurity), Integer(cs)), GetTimeTick - d]);
 
       if not TCipher.CompareHash(TCipher.GenerateSHA1Hash(Dest.Memory, Dest.Size), sourHash) then
-          DoStatus('%s normal 2 parallel hash error!', [GetEnumName(TypeInfo(TCipherSecurity), Integer(cs))]);
+          DoStatus('%s normal 2 Parallel hash error!', [GetEnumName(TypeInfo(TCipherSecurity), Integer(cs))]);
 
       DisposeObject(Parallel);
     end;
@@ -5099,13 +5091,13 @@ begin
       d := GetTimeTick;
 
       if not Parallel.EncryptBufferCBC(cs, Dest.Memory, Dest.Size, @k, True, True) then
-          DoStatus('%s: parallel 2 normal encode failed', [GetEnumName(TypeInfo(TCipherSecurity), Integer(cs))]);
+          DoStatus('%s: Parallel 2 normal encode failed', [GetEnumName(TypeInfo(TCipherSecurity), Integer(cs))]);
       if not TCipher.EncryptBufferCBC(cs, Dest.Memory, Dest.Size, @k, False, True) then
-          DoStatus('%s: parallel 2 normal decode failed', [GetEnumName(TypeInfo(TCipherSecurity), Integer(cs))]);
-      DoStatus('%s - parallel 2 normal performance:%dms', [GetEnumName(TypeInfo(TCipherSecurity), Integer(cs)), GetTimeTick - d]);
+          DoStatus('%s: Parallel 2 normal decode failed', [GetEnumName(TypeInfo(TCipherSecurity), Integer(cs))]);
+      DoStatus('%s - Parallel 2 normal performance:%dms', [GetEnumName(TypeInfo(TCipherSecurity), Integer(cs)), GetTimeTick - d]);
 
       if not TCipher.CompareHash(TCipher.GenerateSHA1Hash(Dest.Memory, Dest.Size), sourHash) then
-          DoStatus('%s parallel 2 normal hash error!', [GetEnumName(TypeInfo(TCipherSecurity), Integer(cs))]);
+          DoStatus('%s Parallel 2 normal hash error!', [GetEnumName(TypeInfo(TCipherSecurity), Integer(cs))]);
 
       DisposeObject(Parallel);
     end;
@@ -5147,7 +5139,7 @@ begin
       DoStatus('%s - performance:%dms', [GetEnumName(TypeInfo(THashSecurity), Integer(hs)), (GetTimeTick - d)]);
     end;
 
-  DoStatus(#13#10'all test done!');
+  DoStatus(#13#10'Cipher test done!');
   DisposeObject([ps, sour, Dest]);
 end;
 
@@ -7332,9 +7324,9 @@ class procedure TMISC.GenerateRandomKey(var key; KeySize: Integer);
 var
   i: Integer;
 begin
-  Randomize;
+  MT19937Randomize;
   for i := 0 to KeySize - 1 do
-      TCCByteArray(key)[i] := System.Random(256); { !!.01 }
+      TCCByteArray(key)[i] := MT19937Rand32(256); { !!.01 }
 end;
 
 class procedure TMISC.HashELF(var Digest: DWORD; const Buf; BufSize: nativeUInt);

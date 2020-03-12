@@ -1,5 +1,5 @@
 { ****************************************************************************** }
-{ * string                by QQ 600585@qq.com                                  * }
+{ * delphi:string fpc:AnsiString               by QQ 600585@qq.com             * }
 { * https://zpascal.net                                                        * }
 { * https://github.com/PassByYou888/zAI                                        * }
 { * https://github.com/PassByYou888/ZServer4D                                  * }
@@ -29,7 +29,7 @@ unit PascalStrings;
 
 interface
 
-uses SysUtils;
+uses CoreClasses;
 
 type
   SystemChar = Char;
@@ -39,7 +39,7 @@ type
   PSystemString = ^SystemString;
   PPascalString = ^TPascalString;
   TArrayChar = array of SystemChar;
-  TOrdChar = (c0to9, c1to9, c0to32, c0to32no10, cLoAtoF, cHiAtoF, cLoAtoZ, cHiAtoZ, cHex, cAtoF, cAtoZ);
+  TOrdChar = (c0to9, c1to9, c0to32, c0to32no10, cLoAtoF, cHiAtoF, cLoAtoZ, cHiAtoZ, cHex, cAtoF, cAtoZ, cVisibled);
   TOrdChars = set of TOrdChar;
 
   TPascalString = record
@@ -54,10 +54,16 @@ type
     procedure SetBytes(const Value: TBytes);
     function GetPlatformBytes: TBytes;
     procedure SetPlatformBytes(const Value: TBytes);
+    function GetANSI: TBytes;
+    procedure SetANSI(const Value: TBytes);
     function GetLast: SystemChar;
     procedure SetLast(const Value: SystemChar);
     function GetFirst: SystemChar;
     procedure SetFirst(const Value: SystemChar);
+    function GetUpperChar(index: Integer): SystemChar;
+    procedure SetUpperChar(index: Integer; const Value: SystemChar);
+    function GetLowerChar(index: Integer): SystemChar;
+    procedure SetLowerChar(index: Integer; const Value: SystemChar);
   public
     buff: TArrayChar;
 
@@ -117,6 +123,7 @@ type
     procedure Clear;
     procedure Append(t: TPascalString); overload;
     procedure Append(c: SystemChar); overload;
+    procedure Append(const Fmt: SystemString; const Args: array of const); overload;
     function GetString(bPos, ePos: NativeInt): TPascalString;
     procedure Insert(AText: SystemString; idx: Integer);
     procedure FastAsText(var output: SystemString);
@@ -135,6 +142,8 @@ type
     function BuildPlatformPChar: Pointer;
     class procedure FreePlatformPChar(p: Pointer); static;
 
+    class function RandomString(L_: Integer): TPascalString; static;
+
     { https://en.wikipedia.org/wiki/Smith%E2%80%93Waterman_algorithm }
     function SmithWaterman(const p: PPascalString): Double; overload;
     function SmithWaterman(const s: TPascalString): Double; overload;
@@ -142,8 +151,11 @@ type
     property Len: Integer read GetLen write SetLen;
     property L: Integer read GetLen write SetLen;
     property Chars[index: Integer]: SystemChar read GetChars write SetChars; default;
+    property UpperChar[index: Integer]: SystemChar read GetUpperChar write SetUpperChar;
+    property LowerChar[index: Integer]: SystemChar read GetLowerChar write SetLowerChar;
     property Bytes: TBytes read GetBytes write SetBytes;                         // UTF8
     property PlatformBytes: TBytes read GetPlatformBytes write SetPlatformBytes; // system default
+    property ANSI: TBytes read GetANSI write SetANSI;                            // Ansi Bytes
     function BOMBytes: TBytes;
   end;
 
@@ -250,7 +262,7 @@ const
 
 implementation
 
-uses CoreClasses, Variants;
+uses SysUtils, Variants;
 
 procedure CombineCharsPP(const c1, c2: TArrayChar; var output: TArrayChar);
 var
@@ -367,6 +379,7 @@ begin
     cHex: Result := ((v >= ordLA) and (v <= ordLF)) or ((v >= ordHA) and (v <= ordHF)) or ((v >= ord0) and (v <= ord9));
     cAtoF: Result := ((v >= ordLA) and (v <= ordLF)) or ((v >= ordHA) and (v <= ordHF));
     cAtoZ: Result := ((v >= ordLA) and (v <= ordLZ)) or ((v >= ordHA) and (v <= ordHZ));
+    cVisibled: Result := (v <= $20) and (v <= $7E);
     else Result := False;
   end;
 end;
@@ -1347,18 +1360,6 @@ begin
   buff[index - 1] := Value;
 end;
 
-procedure TPascalString.SetBytes(const Value: TBytes);
-begin
-  SetLength(buff, 0);
-  if length(Value) = 0 then
-      Exit;
-  try
-      Text := SysUtils.TEncoding.UTF8.GetString(Value);
-  except
-      SetLength(buff, 0);
-  end;
-end;
-
 function TPascalString.GetBytes: TBytes;
 begin
   SetLength(Result, 0);
@@ -1368,6 +1369,30 @@ begin
   Result := SysUtils.TEncoding.UTF8.GetBytes(Text);
 {$ELSE}
   Result := SysUtils.TEncoding.UTF8.GetBytes(buff);
+{$ENDIF}
+end;
+
+procedure TPascalString.SetBytes(const Value: TBytes);
+begin
+  SetLength(buff, 0);
+  if length(Value) = 0 then
+      Exit;
+  try
+      Text := SysUtils.TEncoding.UTF8.GetString(Value);
+  except
+      SetPlatformBytes(Value);
+  end;
+end;
+
+function TPascalString.GetPlatformBytes: TBytes;
+begin
+  SetLength(Result, 0);
+  if length(buff) = 0 then
+      Exit;
+{$IFDEF FPC}
+  Result := SysUtils.TEncoding.Default.GetBytes(Text);
+{$ELSE}
+  Result := SysUtils.TEncoding.Default.GetBytes(buff);
 {$ENDIF}
 end;
 
@@ -1383,16 +1408,28 @@ begin
   end;
 end;
 
-function TPascalString.GetPlatformBytes: TBytes;
+function TPascalString.GetANSI: TBytes;
 begin
   SetLength(Result, 0);
   if length(buff) = 0 then
       Exit;
 {$IFDEF FPC}
-  Result := SysUtils.TEncoding.Default.GetBytes(Text);
+  Result := SysUtils.TEncoding.ANSI.GetBytes(Text);
 {$ELSE}
-  Result := SysUtils.TEncoding.Default.GetBytes(buff);
+  Result := SysUtils.TEncoding.ANSI.GetBytes(buff);
 {$ENDIF}
+end;
+
+procedure TPascalString.SetANSI(const Value: TBytes);
+begin
+  SetLength(buff, 0);
+  if length(Value) = 0 then
+      Exit;
+  try
+      Text := SysUtils.TEncoding.ANSI.GetString(Value);
+  except
+      SetLength(buff, 0);
+  end;
 end;
 
 function TPascalString.GetLast: SystemChar;
@@ -1419,6 +1456,36 @@ end;
 procedure TPascalString.SetFirst(const Value: SystemChar);
 begin
   buff[0] := Value;
+end;
+
+function TPascalString.GetUpperChar(index: Integer): SystemChar;
+begin
+  Result := GetChars(index);
+  if CharIn(Result, cLoAtoZ) then
+      Result := SystemChar(Word(Result) xor $0020);
+end;
+
+procedure TPascalString.SetUpperChar(index: Integer; const Value: SystemChar);
+begin
+  if CharIn(Value, cLoAtoZ) then
+      SetChars(index, SystemChar(Word(Value) xor $0020))
+  else
+      SetChars(index, Value);
+end;
+
+function TPascalString.GetLowerChar(index: Integer): SystemChar;
+begin
+  Result := GetChars(index);
+  if CharIn(Result, cHiAtoZ) then
+      Result := SystemChar(Word(Result) or $0020);
+end;
+
+procedure TPascalString.SetLowerChar(index: Integer; const Value: SystemChar);
+begin
+  if CharIn(Value, cHiAtoZ) then
+      SetChars(index, SystemChar(Word(Value) or $0020))
+  else
+      SetChars(index, Value);
 end;
 
 {$IFDEF DELPHI}
@@ -1805,6 +1872,11 @@ begin
   buff[length(buff) - 1] := c;
 end;
 
+procedure TPascalString.Append(const Fmt: SystemString; const Args: array of const);
+begin
+  Append(PFormat(Fmt, Args));
+end;
+
 function TPascalString.GetString(bPos, ePos: NativeInt): TPascalString;
 begin
   if ePos > length(buff) then
@@ -1972,6 +2044,18 @@ begin
   FreeMemory(p);
 end;
 
+class function TPascalString.RandomString(L_: Integer): TPascalString;
+var
+  i: Integer;
+  rnd: TMT19937Random;
+begin
+  Result.L := L_;
+  rnd := TMT19937Random.Create;
+  for i := 1 to L_ do
+      Result[i] := SystemChar(rnd.Rand32($7E - $20) + $20);
+  DisposeObject(rnd);
+end;
+
 function TPascalString.SmithWaterman(const p: PPascalString): Double;
 begin
   Result := SmithWatermanCompare(@Self, @p);
@@ -1990,9 +2074,5 @@ begin
   Result := SysUtils.TEncoding.UTF8.GetPreamble + GetBytes;
 {$ENDIF}
 end;
-
-initialization
-
-finalization
 
 end.

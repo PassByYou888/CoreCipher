@@ -61,6 +61,9 @@ type
     Len: Integer;
   end;
 
+  TSymbolVector = TArrayPascalString;
+  TSymbolMatrix = array of TSymbolVector;
+
   TTextParsing = class(TCoreClassObject)
   public
     TextStyle: TTextStyle;
@@ -73,50 +76,61 @@ type
     { compare char }
     function ComparePosStr(const cOffset: Integer; const t: TPascalString): Boolean; overload; inline;
     function ComparePosStr(const cOffset: Integer; const p: PPascalString): Boolean; overload; inline;
+
     { compare comment and text declaration: TokenCache }
     function CompareCommentGetEndPos(const cOffset: Integer): Integer;
     function CompareTextDeclGetEndPos(const cOffset: Integer): Integer;
+
     { rebuild support }
     procedure RebuildParsingCache;
     procedure RebuildText;
     procedure RebuildToken;
+
     { automated context on pick: TokenCache }
     function GetContextBeginPos(const cOffset: Integer): Integer;
     function GetContextEndPos(const cOffset: Integer): Integer;
+
     { special symbol support: TokenCache }
     function isSpecialSymbol(const cOffset: Integer): Boolean; overload;
     function isSpecialSymbol(const cOffset: Integer; var speicalSymbolEndPos: Integer): Boolean; overload;
     function GetSpecialSymbolEndPos(const cOffset: Integer): Integer;
+
     { number decl support: TokenCache }
     function isNumber(const cOffset: Integer): Boolean; overload;
     function isNumber(const cOffset: Integer; var NumberBegin: Integer; var IsHex: Boolean): Boolean; overload;
     function GetNumberEndPos(const cOffset: Integer): Integer;
+
     { text support: TokenCache }
     function isTextDecl(const cOffset: Integer): Boolean;
     function GetTextDeclEndPos(const cOffset: Integer): Integer;
     function GetTextDeclBeginPos(const cOffset: Integer): Integer;
-    function GetTextBody(const AText: TPascalString): TPascalString;
+    function GetTextBody(const Text_: TPascalString): TPascalString;
     function GetTextDeclPos(const cOffset: Integer; var charBeginPos, charEndPos: Integer): Boolean;
+
     { symbol support: TokenCache }
     function isSymbol(const cOffset: Integer): Boolean;
     function GetSymbolEndPos(const cOffset: Integer): Integer;
+
     { ascii support: TokenCache }
     function isAscii(const cOffset: Integer): Boolean;
     function GetAsciiBeginPos(const cOffset: Integer): Integer;
     function GetAsciiEndPos(const cOffset: Integer): Integer;
+
     { comment support: TokenCache }
     function isComment(const cOffset: Integer): Boolean;
     function GetCommentEndPos(const cOffset: Integer): Integer;
     function GetCommentBeginPos(const cOffset: Integer): Integer;
     function GetCommentPos(const cOffset: Integer; var charBeginPos, charEndPos: Integer): Boolean;
     function GetDeletedCommentText: TPascalString;
+
     { text support: TokenCache }
     function isTextOrComment(const cOffset: Integer): Boolean;
     function isCommentOrText(const cOffset: Integer): Boolean;
-    { lowlevel word support: TokenCache no used }
-    function isWordSplitChar(const c: SystemChar; SplitTokenC: TPascalString): Boolean; overload;
-    function isWordSplitChar(const c: SystemChar): Boolean; overload;
-    function isWordSplitChar(const c: SystemChar; DefaultChar: Boolean; SplitTokenC: TPascalString): Boolean; overload;
+
+    { word support: TokenCache no used }
+    class function isWordSplitChar(const c: SystemChar; SplitTokenC: TPascalString): Boolean; overload;
+    class function isWordSplitChar(const c: SystemChar): Boolean; overload;
+    class function isWordSplitChar(const c: SystemChar; DefaultChar: Boolean; SplitTokenC: TPascalString): Boolean; overload;
     function GetWordBeginPos(const cOffset: Integer; SplitTokenC: TPascalString): Integer; overload;
     function GetWordBeginPos(const cOffset: Integer): Integer; overload;
     function GetWordBeginPos(const cOffset: Integer; BeginDefaultChar: Boolean; SplitTokenC: TPascalString): Integer; overload;
@@ -126,16 +140,20 @@ type
     function GetWordEndPos(const cOffset: Integer;
       BeginDefaultChar: Boolean; BeginSplitCharSet: TPascalString;
       EndDefaultChar: Boolean; EndSplitCharSet: TPascalString): Integer; overload;
+
     { sniffing }
     function SniffingNextChar(const cOffset: Integer; declChar: TPascalString): Boolean; overload;
     function SniffingNextChar(const cOffset: Integer; declChar: TPascalString; out OutPos: Integer): Boolean; overload;
+
     { split char }
-    function SplitChar(const cOffset: Integer; var LastPos: Integer; const SplitTokenC, SplitEndTokenC: TPascalString; var SplitOutput: TArrayPascalString): Integer; overload;
-    function SplitChar(const cOffset: Integer; const SplitTokenC, SplitEndTokenC: TPascalString; var SplitOutput: TArrayPascalString): Integer; overload;
+    function SplitChar(const cOffset: Integer; var LastPos: Integer; const SplitTokenC, SplitEndTokenC: TPascalString; var SplitOutput: TSymbolVector): Integer; overload;
+    function SplitChar(const cOffset: Integer; const SplitTokenC, SplitEndTokenC: TPascalString; var SplitOutput: TSymbolVector): Integer; overload;
+
     { split string }
-    function SplitString(const cOffset: Integer; var LastPos: Integer; const SplitTokenS, SplitEndTokenS: TPascalString; var SplitOutput: TArrayPascalString): Integer; overload;
-    function SplitString(const cOffset: Integer; const SplitTokenS, SplitEndTokenS: TPascalString; var SplitOutput: TArrayPascalString): Integer; overload;
-    { token }
+    function SplitString(const cOffset: Integer; var LastPos: Integer; const SplitTokenS, SplitEndTokenS: TPascalString; var SplitOutput: TSymbolVector): Integer; overload;
+    function SplitString(const cOffset: Integer; const SplitTokenS, SplitEndTokenS: TPascalString; var SplitOutput: TSymbolVector): Integer; overload;
+
+    { token operation }
     function CompareTokenText(const cOffset: Integer; t: TPascalString): Boolean;
     function CompareTokenChar(const cOffset: Integer; const c: array of SystemChar): Boolean;
     function GetToken(const cOffset: Integer): PTokenData;
@@ -143,23 +161,88 @@ type
     function GetTokenIndex(t: TTokenType; idx: Integer): PTokenData;
     property TokenIndex[t: TTokenType; idx: Integer]: PTokenData read GetTokenIndex;
     function TokenCount: Integer; overload;
-    function TokenCount(t: TTokenTypes): Integer; overload;
+    function TokenCountT(t: TTokenTypes): Integer; overload;
     function GetTokens(idx: Integer): PTokenData;
-    property Tokens[idx: Integer]: PTokenData read GetTokens;
+    property Tokens[idx: Integer]: PTokenData read GetTokens; default;
     property Token[idx: Integer]: PTokenData read GetTokens;
+    property Count: Integer read TokenCount;
     function FirstToken: PTokenData;
     function LastToken: PTokenData;
+    function NextToken(p: PTokenData): PTokenData;
+    function PrevToken(p: PTokenData): PTokenData;
     function TokenCombine(const bTokenI, eTokenI: Integer; const acceptT: TTokenTypes): TPascalString; overload;
     function TokenCombine(const bTokenI, eTokenI: Integer): TPascalString; overload;
-    { token probe }
+    function Combine(const bTokenI, eTokenI: Integer; const acceptT: TTokenTypes): TPascalString; overload;
+    function Combine(const bTokenI, eTokenI: Integer): TPascalString; overload;
+
+    { token probe StartI->Left }
     function TokenProbeL(startI: Integer; const acceptT: TTokenTypes): PTokenData; overload;
     function TokenProbeL(startI: Integer; const t: TPascalString): PTokenData; overload;
     function TokenProbeL(startI: Integer; const acceptT: TTokenTypes; const t: TPascalString): PTokenData; overload;
+    function TokenProbeL(startI: Integer; const acceptT: TTokenTypes; const t1, t2: TPascalString): PTokenData; overload;
+    function TokenProbeL(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3: TPascalString): PTokenData; overload;
+    function TokenProbeL(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3, t4: TPascalString): PTokenData; overload;
+    function TokenProbeL(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3, t4, t5: TPascalString): PTokenData; overload;
+
+    { token probe StartI->Right }
     function TokenProbeR(startI: Integer; const acceptT: TTokenTypes): PTokenData; overload;
     function TokenProbeR(startI: Integer; const t: TPascalString): PTokenData; overload;
     function TokenProbeR(startI: Integer; const acceptT: TTokenTypes; const t: TPascalString): PTokenData; overload;
-    { Free to match all strings from Token[StartIndex] left to right, including any symbols. return token }
-    function TokenStringProbe(startI: Integer; const acceptT: TTokenTypes; const t: TPascalString): PTokenData;
+    function TokenProbeR(startI: Integer; const acceptT: TTokenTypes; const t1, t2: TPascalString): PTokenData; overload;
+    function TokenProbeR(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3: TPascalString): PTokenData; overload;
+    function TokenProbeR(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3, t4: TPascalString): PTokenData; overload;
+    function TokenProbeR(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3, t4, t5: TPascalString): PTokenData; overload;
+
+    { token probe alias StartI->Left }
+    function ProbeL(startI: Integer; const acceptT: TTokenTypes): PTokenData; overload;
+    function ProbeL(startI: Integer; const t: TPascalString): PTokenData; overload;
+    function ProbeL(startI: Integer; const acceptT: TTokenTypes; const t: TPascalString): PTokenData; overload;
+    function ProbeL(startI: Integer; const acceptT: TTokenTypes; const t1, t2: TPascalString): PTokenData; overload;
+    function ProbeL(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3: TPascalString): PTokenData; overload;
+    function ProbeL(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3, t4: TPascalString): PTokenData; overload;
+    function ProbeL(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3, t4, t5: TPascalString): PTokenData; overload;
+    function LProbe(startI: Integer; const acceptT: TTokenTypes): PTokenData; overload;
+    function LProbe(startI: Integer; const t: TPascalString): PTokenData; overload;
+    function LProbe(startI: Integer; const acceptT: TTokenTypes; const t: TPascalString): PTokenData; overload;
+    function LProbe(startI: Integer; const acceptT: TTokenTypes; const t1, t2: TPascalString): PTokenData; overload;
+    function LProbe(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3: TPascalString): PTokenData; overload;
+    function LProbe(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3, t4: TPascalString): PTokenData; overload;
+    function LProbe(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3, t4, t5: TPascalString): PTokenData; overload;
+
+    { token probe alias StartI->Right }
+    function ProbeR(startI: Integer; const acceptT: TTokenTypes): PTokenData; overload;
+    function ProbeR(startI: Integer; const t: TPascalString): PTokenData; overload;
+    function ProbeR(startI: Integer; const acceptT: TTokenTypes; const t: TPascalString): PTokenData; overload;
+    function ProbeR(startI: Integer; const acceptT: TTokenTypes; const t1, t2: TPascalString): PTokenData; overload;
+    function ProbeR(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3: TPascalString): PTokenData; overload;
+    function ProbeR(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3, t4: TPascalString): PTokenData; overload;
+    function ProbeR(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3, t4, t5: TPascalString): PTokenData; overload;
+    function RProbe(startI: Integer; const acceptT: TTokenTypes): PTokenData; overload;
+    function RProbe(startI: Integer; const t: TPascalString): PTokenData; overload;
+    function RProbe(startI: Integer; const acceptT: TTokenTypes; const t: TPascalString): PTokenData; overload;
+    function RProbe(startI: Integer; const acceptT: TTokenTypes; const t1, t2: TPascalString): PTokenData; overload;
+    function RProbe(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3: TPascalString): PTokenData; overload;
+    function RProbe(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3, t4: TPascalString): PTokenData; overload;
+    function RProbe(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3, t4, t5: TPascalString): PTokenData; overload;
+
+    { free to match all strings from Token[StartIndex] left to right, including any symbols. return token }
+    function TokenFullStringProbe(startI: Integer; const acceptT: TTokenTypes; const t: TPascalString): PTokenData;
+    function StringProbe(startI: Integer; const acceptT: TTokenTypes; const t: TPascalString): PTokenData;
+
+    { symbol Indent probe for end indent }
+    function IndentSymbolEndProbeR(startI: Integer; const indent_begin_symbol, indent_end_symbol: TPascalString): PTokenData;
+
+    { symbol Indent probe for begin indent }
+    function IndentSymbolBeginProbeL(startI: Integer; const indent_begin_symbol, indent_end_symbol: TPascalString): PTokenData;
+
+    { segmention text as symbol vector, L = output }
+    function DetectSymbolVector: Boolean;
+    function FillSymbolVector(L: TPascalStringList): Boolean; overload;
+    function FillSymbolVector: TSymbolVector; overload;
+
+    { segmention text as symbol matrix }
+    function FillSymbolMatrix(W, H: Integer; var symbolMatrix: TSymbolMatrix): Boolean;
+
     { misc }
     function GetText(const bPos, ePos: Integer): TPascalString; overload;
     function GetStr(const bPos, ePos: Integer): TPascalString; overload;
@@ -176,25 +259,31 @@ type
     procedure InsertTextBlock(const bPos, ePos: Integer; AInsertText: TPascalString); overload;
     procedure InsertTextBlock(const tp: TTextPos; AInsertText: TPascalString); overload;
     function SearchWordBody(initPos: Integer; wordInfo: TPascalString; var OutPos: TTextPos): Boolean;
+
     { string declaration }
     class function TranslatePascalDeclToText(const Decl: TPascalString): TPascalString;
     class function TranslateTextToPascalDecl(const Decl: TPascalString): TPascalString;
     class function TranslateTextToPascalDeclWithUnicode(const Decl: TPascalString): TPascalString;
     class function TranslateC_DeclToText(const Decl: TPascalString): TPascalString;
     class function TranslateTextToC_Decl(const Decl: TPascalString): TPascalString;
+
     { comment declaration }
     class function TranslatePascalDeclCommentToText(const Decl: TPascalString): TPascalString;
     class function TranslateTextToPascalDeclComment(const Decl: TPascalString): TPascalString;
     class function TranslateC_DeclCommentToText(const Decl: TPascalString): TPascalString;
     class function TranslateTextToC_DeclComment(const Decl: TPascalString): TPascalString;
+
     { structor }
-    constructor Create(const AText: TPascalString; AStyle: TTextStyle; ASpecialSymbol: TListPascalString); overload;
-    constructor Create(const AText: TPascalString; AStyle: TTextStyle); overload;
-    constructor Create(const AText: TPascalString; AStyle: TTextStyle; ASpecialSymbol: TListPascalString; ASpacerSymbol: SystemString); overload;
+    constructor Create(const Text_: TPascalString; Style_: TTextStyle; SpecialSymbol_: TListPascalString; SpacerSymbol_: SystemString); overload;
+    constructor Create(const Text_: TPascalString; Style_: TTextStyle; SpecialSymbol_: TListPascalString); overload;
+    constructor Create(const Text_: TPascalString; Style_: TTextStyle); overload;
+    constructor Create(const Text_: TPascalString); overload;
     destructor Destroy; override;
+
     { external }
     procedure Init; virtual;
     function Parsing: Boolean; virtual;
+
     { debug }
     procedure Print;
   end;
@@ -202,10 +291,10 @@ type
   TTextParsingClass = class of TTextParsing;
 
 const
-  C_SpacerSymbol = #44#46#43#45#42#47#40#41#59#58#61#35#64#94#38#37#33#34#91#93#60#62#63#123#125#39#36;
+  C_SpacerSymbol = #44#46#43#45#42#47#40#41#59#58#61#35#64#94#38#37#33#34#91#93#60#62#63#123#125#39#36#124;
 
 var
-  V_SpacerSymbol: SystemString = C_SpacerSymbol;
+  SpacerSymbol: TAtomString;
 
 implementation
 
@@ -273,7 +362,7 @@ begin
 
   Result := cPos;
 
-  if ComparePosStr(Result, '//') then
+  if (TextStyle <> tsText) and (ComparePosStr(Result, '//')) then
     begin
       inc(Result, 2);
       while ParsingData.Text[Result] <> #10 do
@@ -355,7 +444,9 @@ begin
   if cPos > L then
       cPos := L;
 
-  if (cPos + 1 < L) and (TextStyle = tsPascal) and (ParsingData.Text[cPos] = #39) then
+  if (cPos + 1 < L)
+    and (TextStyle = tsPascal)
+    and (ParsingData.Text[cPos] = #39) then
     begin
       if ComparePosStr(cPos, #39#39#39#39) then
         begin
@@ -390,7 +481,9 @@ begin
       inc(cPos, 1);
     end;
 
-  if (cPos + 1 < L) and (TextStyle = tsC) and (ParsingData.Text[cPos] = '"') then
+  if (cPos + 1 < L)
+    and (TextStyle = tsC)
+    and (ParsingData.Text[cPos] = '"') then
     begin
       inc(cPos, 1);
       while ParsingData.Text[cPos] <> '"' do
@@ -410,7 +503,6 @@ begin
     begin
       repeat
         inc(cPos, 1);
-
         while isWordSplitChar(ParsingData.Text[cPos]) do
           begin
             if cPos + 1 > L then
@@ -1067,14 +1159,14 @@ begin
       Result := cOffset;
 end;
 
-function TTextParsing.GetTextBody(const AText: TPascalString): TPascalString;
+function TTextParsing.GetTextBody(const Text_: TPascalString): TPascalString;
 begin
   if TextStyle = tsPascal then
-      Result := TranslatePascalDeclToText(AText)
+      Result := TranslatePascalDeclToText(Text_)
   else if TextStyle = tsC then
-      Result := TranslateC_DeclToText(AText)
+      Result := TranslateC_DeclToText(Text_)
   else
-      Result := AText;
+      Result := Text_;
 end;
 
 function TTextParsing.GetTextDeclPos(const cOffset: Integer; var charBeginPos, charEndPos: Integer): Boolean;
@@ -1408,17 +1500,17 @@ begin
   Result := isComment(cOffset) or isTextDecl(cOffset);
 end;
 
-function TTextParsing.isWordSplitChar(const c: SystemChar; SplitTokenC: TPascalString): Boolean;
+class function TTextParsing.isWordSplitChar(const c: SystemChar; SplitTokenC: TPascalString): Boolean;
 begin
   Result := isWordSplitChar(c, True, SplitTokenC);
 end;
 
-function TTextParsing.isWordSplitChar(const c: SystemChar): Boolean;
+class function TTextParsing.isWordSplitChar(const c: SystemChar): Boolean;
 begin
   Result := isWordSplitChar(c, True, '');
 end;
 
-function TTextParsing.isWordSplitChar(const c: SystemChar; DefaultChar: Boolean; SplitTokenC: TPascalString): Boolean;
+class function TTextParsing.isWordSplitChar(const c: SystemChar; DefaultChar: Boolean; SplitTokenC: TPascalString): Boolean;
 begin
   if DefaultChar then
       Result := CharIn(c, [c0to32], SplitTokenC)
@@ -1548,17 +1640,18 @@ begin
       OutPos := cPos;
 end;
 
-function TTextParsing.SplitChar(const cOffset: Integer; var LastPos: Integer; const SplitTokenC, SplitEndTokenC: TPascalString; var SplitOutput: TArrayPascalString): Integer;
-  procedure AddS(s: TPascalString);
+function TTextParsing.SplitChar(const cOffset: Integer; var LastPos: Integer; const SplitTokenC, SplitEndTokenC: TPascalString; var SplitOutput: TSymbolVector): Integer;
+  procedure AddS(const s: TPascalString);
   var
+    n: TPascalString;
     L: Integer;
   begin
-    s := s.TrimChar(#32#0);
-    if s.Len = 0 then
+    n := s.TrimChar(#32#0);
+    if n.Len = 0 then
         exit;
     L := Length(SplitOutput);
     SetLength(SplitOutput, L + 1);
-    SplitOutput[L] := s;
+    SplitOutput[L] := n;
     inc(Result);
   end;
 
@@ -1637,14 +1730,14 @@ begin
   LastPos := cPos;
 end;
 
-function TTextParsing.SplitChar(const cOffset: Integer; const SplitTokenC, SplitEndTokenC: TPascalString; var SplitOutput: TArrayPascalString): Integer;
+function TTextParsing.SplitChar(const cOffset: Integer; const SplitTokenC, SplitEndTokenC: TPascalString; var SplitOutput: TSymbolVector): Integer;
 var
   t: Integer;
 begin
   Result := SplitChar(cOffset, t, SplitTokenC, SplitEndTokenC, SplitOutput);
 end;
 
-function TTextParsing.SplitString(const cOffset: Integer; var LastPos: Integer; const SplitTokenS, SplitEndTokenS: TPascalString; var SplitOutput: TArrayPascalString): Integer;
+function TTextParsing.SplitString(const cOffset: Integer; var LastPos: Integer; const SplitTokenS, SplitEndTokenS: TPascalString; var SplitOutput: TSymbolVector): Integer;
   procedure AddS(s: TPascalString);
   var
     L: Integer;
@@ -1732,7 +1825,7 @@ begin
   LastPos := cPos;
 end;
 
-function TTextParsing.SplitString(const cOffset: Integer; const SplitTokenS, SplitEndTokenS: TPascalString; var SplitOutput: TArrayPascalString): Integer;
+function TTextParsing.SplitString(const cOffset: Integer; const SplitTokenS, SplitEndTokenS: TPascalString; var SplitOutput: TSymbolVector): Integer;
 var
   t: Integer;
 begin
@@ -1796,7 +1889,7 @@ begin
   Result := ParsingData.Cache.TokenDataList.Count;
 end;
 
-function TTextParsing.TokenCount(t: TTokenTypes): Integer;
+function TTextParsing.TokenCountT(t: TTokenTypes): Integer;
 var
   i: Integer;
 begin
@@ -1821,11 +1914,32 @@ begin
   Result := GetTokens(TokenCount - 1);
 end;
 
+function TTextParsing.NextToken(p: PTokenData): PTokenData;
+begin
+  Result := nil;
+  if (p = nil) or (p^.Index + 1 >= TokenCount) then
+      exit;
+  Result := Tokens[p^.Index + 1];
+end;
+
+function TTextParsing.PrevToken(p: PTokenData): PTokenData;
+begin
+  Result := nil;
+  if (p = nil) or (p^.Index - 1 >= 0) then
+      exit;
+  Result := Tokens[p^.Index - 1];
+end;
+
 function TTextParsing.TokenCombine(const bTokenI, eTokenI: Integer; const acceptT: TTokenTypes): TPascalString;
 var
   bi, ei: Integer;
   p: PTokenData;
 begin
+  Result := '';
+
+  if (bTokenI < 0) or (eTokenI < 0) then
+      exit;
+
   if bTokenI > eTokenI then
     begin
       bi := eTokenI;
@@ -1837,19 +1951,37 @@ begin
       ei := eTokenI;
     end;
 
-  Result := '';
-  while bi <= ei do
+  while (bi <= ei) and (bi < TokenCount) do
     begin
       p := Tokens[bi];
       if p^.tokenType in acceptT then
           Result.Append(p^.Text);
       inc(bi);
     end;
+
+  if (bi >= TokenCount) then
+    begin
+      while (Result.Len > 0) and (Result.Last = #0) do
+          Result.DeleteLast;
+
+      if (Result.Len > 0) and (Result.Last = #32) then
+          Result.DeleteLast;
+    end;
 end;
 
 function TTextParsing.TokenCombine(const bTokenI, eTokenI: Integer): TPascalString;
 begin
   Result := TokenCombine(bTokenI, eTokenI, [ttTextDecl, ttComment, ttNumber, ttSymbol, ttAscii, ttSpecialSymbol, ttUnknow]);
+end;
+
+function TTextParsing.Combine(const bTokenI, eTokenI: Integer; const acceptT: TTokenTypes): TPascalString;
+begin
+  Result := TokenCombine(bTokenI, eTokenI, acceptT);
+end;
+
+function TTextParsing.Combine(const bTokenI, eTokenI: Integer): TPascalString;
+begin
+  Result := TokenCombine(bTokenI, eTokenI);
 end;
 
 function TTextParsing.TokenProbeL(startI: Integer; const acceptT: TTokenTypes): PTokenData;
@@ -1909,6 +2041,94 @@ begin
     begin
       p := PTokenData(ParsingData.Cache.TokenDataList[idx]);
       if (p^.tokenType in acceptT) and (p^.Text.Same(t)) then
+        begin
+          Result := p;
+          exit;
+        end
+      else
+          dec(idx);
+    end;
+end;
+
+function TTextParsing.TokenProbeL(startI: Integer; const acceptT: TTokenTypes; const t1, t2: TPascalString): PTokenData;
+var
+  idx: Integer;
+  p: PTokenData;
+begin
+  Result := nil;
+  if ParsingData.Cache.TokenDataList.Count <= 0 then
+      exit;
+  idx := startI;
+  while idx >= 0 do
+    begin
+      p := PTokenData(ParsingData.Cache.TokenDataList[idx]);
+      if (p^.tokenType in acceptT) and (p^.Text.Same(t1, t2)) then
+        begin
+          Result := p;
+          exit;
+        end
+      else
+          dec(idx);
+    end;
+end;
+
+function TTextParsing.TokenProbeL(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3: TPascalString): PTokenData;
+var
+  idx: Integer;
+  p: PTokenData;
+begin
+  Result := nil;
+  if ParsingData.Cache.TokenDataList.Count <= 0 then
+      exit;
+  idx := startI;
+  while idx >= 0 do
+    begin
+      p := PTokenData(ParsingData.Cache.TokenDataList[idx]);
+      if (p^.tokenType in acceptT) and (p^.Text.Same(t1, t2, t3)) then
+        begin
+          Result := p;
+          exit;
+        end
+      else
+          dec(idx);
+    end;
+end;
+
+function TTextParsing.TokenProbeL(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3, t4: TPascalString): PTokenData;
+var
+  idx: Integer;
+  p: PTokenData;
+begin
+  Result := nil;
+  if ParsingData.Cache.TokenDataList.Count <= 0 then
+      exit;
+  idx := startI;
+  while idx >= 0 do
+    begin
+      p := PTokenData(ParsingData.Cache.TokenDataList[idx]);
+      if (p^.tokenType in acceptT) and (p^.Text.Same(t1, t2, t3, t4)) then
+        begin
+          Result := p;
+          exit;
+        end
+      else
+          dec(idx);
+    end;
+end;
+
+function TTextParsing.TokenProbeL(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3, t4, t5: TPascalString): PTokenData;
+var
+  idx: Integer;
+  p: PTokenData;
+begin
+  Result := nil;
+  if ParsingData.Cache.TokenDataList.Count <= 0 then
+      exit;
+  idx := startI;
+  while idx >= 0 do
+    begin
+      p := PTokenData(ParsingData.Cache.TokenDataList[idx]);
+      if (p^.tokenType in acceptT) and (p^.Text.Same(t1, t2, t3, t4, t5)) then
         begin
           Result := p;
           exit;
@@ -1984,7 +2204,235 @@ begin
     end;
 end;
 
-function TTextParsing.TokenStringProbe(startI: Integer; const acceptT: TTokenTypes; const t: TPascalString): PTokenData;
+function TTextParsing.TokenProbeR(startI: Integer; const acceptT: TTokenTypes; const t1, t2: TPascalString): PTokenData;
+var
+  idx: Integer;
+  p: PTokenData;
+begin
+  Result := nil;
+  if ParsingData.Cache.TokenDataList.Count <= 0 then
+      exit;
+  idx := startI;
+  while idx < ParsingData.Cache.TokenDataList.Count do
+    begin
+      p := PTokenData(ParsingData.Cache.TokenDataList[idx]);
+      if (p^.tokenType in acceptT) and (p^.Text.Same(t1, t2)) then
+        begin
+          Result := p;
+          exit;
+        end
+      else
+          inc(idx);
+    end;
+end;
+
+function TTextParsing.TokenProbeR(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3: TPascalString): PTokenData;
+var
+  idx: Integer;
+  p: PTokenData;
+begin
+  Result := nil;
+  if ParsingData.Cache.TokenDataList.Count <= 0 then
+      exit;
+  idx := startI;
+  while idx < ParsingData.Cache.TokenDataList.Count do
+    begin
+      p := PTokenData(ParsingData.Cache.TokenDataList[idx]);
+      if (p^.tokenType in acceptT) and (p^.Text.Same(t1, t2, t3)) then
+        begin
+          Result := p;
+          exit;
+        end
+      else
+          inc(idx);
+    end;
+end;
+
+function TTextParsing.TokenProbeR(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3, t4: TPascalString): PTokenData;
+var
+  idx: Integer;
+  p: PTokenData;
+begin
+  Result := nil;
+  if ParsingData.Cache.TokenDataList.Count <= 0 then
+      exit;
+  idx := startI;
+  while idx < ParsingData.Cache.TokenDataList.Count do
+    begin
+      p := PTokenData(ParsingData.Cache.TokenDataList[idx]);
+      if (p^.tokenType in acceptT) and (p^.Text.Same(t1, t2, t3, t4)) then
+        begin
+          Result := p;
+          exit;
+        end
+      else
+          inc(idx);
+    end;
+end;
+
+function TTextParsing.TokenProbeR(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3, t4, t5: TPascalString): PTokenData;
+var
+  idx: Integer;
+  p: PTokenData;
+begin
+  Result := nil;
+  if ParsingData.Cache.TokenDataList.Count <= 0 then
+      exit;
+  idx := startI;
+  while idx < ParsingData.Cache.TokenDataList.Count do
+    begin
+      p := PTokenData(ParsingData.Cache.TokenDataList[idx]);
+      if (p^.tokenType in acceptT) and (p^.Text.Same(t1, t2, t3, t4, t5)) then
+        begin
+          Result := p;
+          exit;
+        end
+      else
+          inc(idx);
+    end;
+end;
+
+function TTextParsing.ProbeL(startI: Integer; const acceptT: TTokenTypes): PTokenData;
+begin
+  Result := TokenProbeL(startI, acceptT);
+end;
+
+function TTextParsing.ProbeL(startI: Integer; const t: TPascalString): PTokenData;
+begin
+  Result := TokenProbeL(startI, t);
+end;
+
+function TTextParsing.ProbeL(startI: Integer; const acceptT: TTokenTypes; const t: TPascalString): PTokenData;
+begin
+  Result := TokenProbeL(startI, acceptT, t);
+end;
+
+function TTextParsing.ProbeL(startI: Integer; const acceptT: TTokenTypes; const t1, t2: TPascalString): PTokenData;
+begin
+  Result := TokenProbeL(startI, acceptT, t1, t2);
+end;
+
+function TTextParsing.ProbeL(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3: TPascalString): PTokenData;
+begin
+  Result := TokenProbeL(startI, acceptT, t1, t2, t3);
+end;
+
+function TTextParsing.ProbeL(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3, t4: TPascalString): PTokenData;
+begin
+  Result := TokenProbeL(startI, acceptT, t1, t2, t3, t4);
+end;
+
+function TTextParsing.ProbeL(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3, t4, t5: TPascalString): PTokenData;
+begin
+  Result := TokenProbeL(startI, acceptT, t1, t2, t3, t4, t5);
+end;
+
+function TTextParsing.LProbe(startI: Integer; const acceptT: TTokenTypes): PTokenData;
+begin
+  Result := TokenProbeL(startI, acceptT);
+end;
+
+function TTextParsing.LProbe(startI: Integer; const t: TPascalString): PTokenData;
+begin
+  Result := TokenProbeL(startI, t);
+end;
+
+function TTextParsing.LProbe(startI: Integer; const acceptT: TTokenTypes; const t: TPascalString): PTokenData;
+begin
+  Result := TokenProbeL(startI, acceptT, t);
+end;
+
+function TTextParsing.LProbe(startI: Integer; const acceptT: TTokenTypes; const t1, t2: TPascalString): PTokenData;
+begin
+  Result := TokenProbeL(startI, acceptT, t1, t2);
+end;
+
+function TTextParsing.LProbe(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3: TPascalString): PTokenData;
+begin
+  Result := TokenProbeL(startI, acceptT, t1, t2, t3);
+end;
+
+function TTextParsing.LProbe(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3, t4: TPascalString): PTokenData;
+begin
+  Result := TokenProbeL(startI, acceptT, t1, t2, t3, t4);
+end;
+
+function TTextParsing.LProbe(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3, t4, t5: TPascalString): PTokenData;
+begin
+  Result := TokenProbeL(startI, acceptT, t1, t2, t3, t4, t5);
+end;
+
+function TTextParsing.ProbeR(startI: Integer; const acceptT: TTokenTypes): PTokenData;
+begin
+  Result := TokenProbeR(startI, acceptT);
+end;
+
+function TTextParsing.ProbeR(startI: Integer; const t: TPascalString): PTokenData;
+begin
+  Result := TokenProbeR(startI, t);
+end;
+
+function TTextParsing.ProbeR(startI: Integer; const acceptT: TTokenTypes; const t: TPascalString): PTokenData;
+begin
+  Result := TokenProbeR(startI, acceptT, t);
+end;
+
+function TTextParsing.ProbeR(startI: Integer; const acceptT: TTokenTypes; const t1, t2: TPascalString): PTokenData;
+begin
+  Result := TokenProbeR(startI, acceptT, t1, t2);
+end;
+
+function TTextParsing.ProbeR(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3: TPascalString): PTokenData;
+begin
+  Result := TokenProbeR(startI, acceptT, t1, t2, t3);
+end;
+
+function TTextParsing.ProbeR(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3, t4: TPascalString): PTokenData;
+begin
+  Result := TokenProbeR(startI, acceptT, t1, t2, t3, t4);
+end;
+
+function TTextParsing.ProbeR(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3, t4, t5: TPascalString): PTokenData;
+begin
+  Result := TokenProbeR(startI, acceptT, t1, t2, t3, t4, t5);
+end;
+
+function TTextParsing.RProbe(startI: Integer; const acceptT: TTokenTypes): PTokenData;
+begin
+  Result := TokenProbeR(startI, acceptT);
+end;
+
+function TTextParsing.RProbe(startI: Integer; const t: TPascalString): PTokenData;
+begin
+  Result := TokenProbeR(startI, t);
+end;
+
+function TTextParsing.RProbe(startI: Integer; const acceptT: TTokenTypes; const t: TPascalString): PTokenData;
+begin
+  Result := TokenProbeR(startI, acceptT, t);
+end;
+
+function TTextParsing.RProbe(startI: Integer; const acceptT: TTokenTypes; const t1, t2: TPascalString): PTokenData;
+begin
+  Result := TokenProbeR(startI, acceptT, t1, t2);
+end;
+
+function TTextParsing.RProbe(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3: TPascalString): PTokenData;
+begin
+  Result := TokenProbeR(startI, acceptT, t1, t2, t3);
+end;
+
+function TTextParsing.RProbe(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3, t4: TPascalString): PTokenData;
+begin
+  Result := TokenProbeR(startI, acceptT, t1, t2, t3, t4);
+end;
+
+function TTextParsing.RProbe(startI: Integer; const acceptT: TTokenTypes; const t1, t2, t3, t4, t5: TPascalString): PTokenData;
+begin
+  Result := TokenProbeR(startI, acceptT, t1, t2, t3, t4, t5);
+end;
+
+function TTextParsing.StringProbe(startI: Integer; const acceptT: TTokenTypes; const t: TPascalString): PTokenData;
 var
   idx: Integer;
   p: PTokenData;
@@ -2006,6 +2454,237 @@ begin
     end;
 end;
 
+function TTextParsing.TokenFullStringProbe(startI: Integer; const acceptT: TTokenTypes; const t: TPascalString): PTokenData;
+begin
+  Result := StringProbe(startI, acceptT, t);
+end;
+
+function TTextParsing.IndentSymbolEndProbeR(startI: Integer; const indent_begin_symbol, indent_end_symbol: TPascalString): PTokenData;
+var
+  idx, bC, eC: Integer;
+  p: PTokenData;
+begin
+  Result := nil;
+  if ParsingData.Cache.TokenDataList.Count <= 0 then
+      exit;
+  idx := startI;
+  bC := 0;
+  eC := 0;
+  while idx < ParsingData.Cache.TokenDataList.Count do
+    begin
+      p := PTokenData(ParsingData.Cache.TokenDataList[idx]);
+
+      if indent_begin_symbol.Exists(p^.Text.buff) then
+          inc(bC)
+      else if indent_end_symbol.Exists(p^.Text.buff) then
+          inc(eC);
+
+      if (bC > 0) and (eC = bC) then
+        begin
+          Result := p;
+          exit;
+        end;
+
+      inc(idx);
+    end;
+end;
+
+function TTextParsing.IndentSymbolBeginProbeL(startI: Integer; const indent_begin_symbol, indent_end_symbol: TPascalString): PTokenData;
+var
+  idx, bC, eC: Integer;
+  p: PTokenData;
+begin
+  Result := nil;
+  if ParsingData.Cache.TokenDataList.Count <= 0 then
+      exit;
+  idx := startI;
+  bC := 0;
+  eC := 0;
+  while idx >= 0 do
+    begin
+      p := PTokenData(ParsingData.Cache.TokenDataList[idx]);
+
+      if indent_begin_symbol.Exists(p^.Text.buff) then
+          inc(bC)
+      else if indent_end_symbol.Exists(p^.Text.buff) then
+          inc(eC);
+
+      if (eC > 0) and (eC = bC) then
+        begin
+          Result := p;
+          exit;
+        end;
+
+      dec(idx);
+    end;
+end;
+
+function TTextParsing.DetectSymbolVector: Boolean;
+var
+  i: Integer;
+  p1, p2, paramB, paramE: PTokenData;
+  vExp: U_String;
+  VectorNum: Integer;
+begin
+  Result := False;
+
+  i := 0;
+  p1 := nil;
+  p2 := nil;
+  paramB := FirstToken;
+  paramE := paramB;
+  VectorNum := 0;
+
+  while i < TokenCount do
+    begin
+      p1 := TokenProbeR(i, [ttSymbol]);
+      if p1 = nil then
+        begin
+          // successed
+          inc(VectorNum);
+          Break;
+        end;
+      if p1^.Text.Same(',', ';') then
+        begin
+          paramE := p1;
+          inc(VectorNum);
+          paramB := NextToken(paramE);
+          // successed
+          if paramB = nil then
+              Break;
+          // do loop.
+          paramE := paramB;
+          i := paramB^.Index;
+        end
+      else if p1^.Text.Same('(') then
+        begin
+          p2 := IndentSymbolEndProbeR(p1^.Index, '(', ')');
+          // error
+          if p2 = nil then
+              exit;
+
+          // do loop.
+          paramE := paramB;
+          i := p2^.Index + 1;
+        end
+      else if p1^.Text.Same('[') then
+        begin
+          p2 := IndentSymbolEndProbeR(p1^.Index, '[', ']');
+          // error
+          if p2 = nil then
+              exit;
+          // do loop.
+          paramE := paramB;
+          i := p2^.Index + 1;
+        end
+      else
+          inc(i);
+    end;
+
+  Result := VectorNum > 1;
+end;
+
+function TTextParsing.FillSymbolVector(L: TPascalStringList): Boolean;
+var
+  i: Integer;
+  p1, p2, paramB, paramE: PTokenData;
+  vExp: U_String;
+begin
+  Result := False;
+
+  i := 0;
+  p1 := nil;
+  p2 := nil;
+  paramB := FirstToken;
+  paramE := paramB;
+
+  while i < TokenCount do
+    begin
+      p1 := TokenProbeR(i, [ttSymbol]);
+      if p1 = nil then
+        begin
+          // successed
+          vExp := TokenCombine(paramB^.Index, TokenCount - 1);
+          L.Add(vExp);
+          Break;
+        end;
+      if p1^.Text.Same(',', ';') then
+        begin
+          paramE := p1;
+          if paramB <> paramE then
+              vExp := TokenCombine(paramB^.Index, paramE^.Index - 1)
+          else
+              vExp := '';
+          L.Add(vExp);
+          paramB := NextToken(paramE);
+          // successed
+          if paramB = nil then
+              Break;
+          // do loop.
+          paramE := paramB;
+          i := paramB^.Index;
+        end
+      else if p1^.Text.Same('(') then
+        begin
+          p2 := IndentSymbolEndProbeR(p1^.Index, '(', ')');
+          // error
+          if p2 = nil then
+              exit;
+          // do loop.
+          paramE := paramB;
+          i := p2^.Index + 1;
+        end
+      else if p1^.Text.Same('[') then
+        begin
+          p2 := IndentSymbolEndProbeR(p1^.Index, '[', ']');
+          // error
+          if p2 = nil then
+              exit;
+          // do loop.
+          paramE := paramB;
+          i := p2^.Index + 1;
+        end
+      else
+          inc(i);
+    end;
+
+  Result := True;
+end;
+
+function TTextParsing.FillSymbolVector: TSymbolVector;
+var
+  L: TPascalStringList;
+begin
+  L := TPascalStringList.Create;
+  if FillSymbolVector(L) then
+      L.FillTo(Result)
+  else
+      SetLength(Result, 0);
+  DisposeObject(L);
+end;
+
+function TTextParsing.FillSymbolMatrix(W, H: Integer; var symbolMatrix: TSymbolMatrix): Boolean;
+var
+  L: TPascalStringList;
+  i, j, k: Integer;
+begin
+  SetLength(symbolMatrix, 0, 0);
+  L := TPascalStringList.Create;
+  Result := FillSymbolVector(L);
+  if L.Count >= W * H then
+    begin
+      SetLength(symbolMatrix, H, W);
+      k := 0;
+      for j := 0 to H - 1 do
+        for i := 0 to W - 1 do
+          begin
+            symbolMatrix[j, i] := L[k];
+            inc(k);
+          end;
+    end;
+  DisposeObject(L);
+end;
+
 function TTextParsing.GetText(const bPos, ePos: Integer): TPascalString;
 begin
   Result := GetStr(bPos, ePos);
@@ -2013,8 +2692,14 @@ end;
 
 function TTextParsing.GetStr(const bPos, ePos: Integer): TPascalString;
 begin
-  if ePos = ParsingData.Len then
-      Result := ParsingData.Text.GetString(bPos, ePos + 1)
+  if ePos >= ParsingData.Len then
+    begin
+      Result := ParsingData.Text.GetString(bPos, ePos + 1);
+      while (Result.Len > 0) and (Result.Last = #0) do
+          Result.DeleteLast;
+      if (Result.Len > 0) and (Result.Last = #32) then
+          Result.DeleteLast;
+    end
   else
       Result := ParsingData.Text.GetString(bPos, ePos);
 end;
@@ -2256,10 +2941,10 @@ begin
       exit;
     end;
 
-  ordCharInfo.Len := 32;
+  ordCharInfo.Len := 32 + 1;
   for cPos := 0 to 31 do
-      ordCharInfo[cPos] := SystemChar(Ord(cPos));
-  ordCharInfo[32] := #39;
+      ordCharInfo[cPos + 1] := SystemChar(Ord(cPos));
+  ordCharInfo[33] := #39;
 
   Result := '';
   LastIsOrdChar := False;
@@ -2299,16 +2984,23 @@ var
   i: Integer;
 
   // ext decl begin flag
+  VIsCharDecl: Boolean;
   VIsTextDecl: Boolean;
   nText: TPascalString;
   wasC: Boolean;
 begin
   cPos := 1;
+  VIsCharDecl := False;
   VIsTextDecl := False;
   Result := '';
   while cPos <= Decl.Len do
     begin
-      if Decl[cPos] = '"' then
+      if Decl[cPos] = #39 then
+        begin
+          VIsCharDecl := not VIsCharDecl;
+          inc(cPos);
+        end
+      else if Decl[cPos] = '"' then
         begin
           VIsTextDecl := not VIsTextDecl;
           inc(cPos);
@@ -2328,7 +3020,7 @@ begin
             end;
           if (not wasC) then
             begin
-              if (VIsTextDecl) then
+              if VIsTextDecl or VIsCharDecl then
                   Result.Append(Decl[cPos]);
               inc(cPos);
             end;
@@ -2481,24 +3173,24 @@ begin
       Result := '/* ' + n + ' */';
 end;
 
-constructor TTextParsing.Create(const AText: TPascalString; AStyle: TTextStyle; ASpecialSymbol: TListPascalString);
+constructor TTextParsing.Create(const Text_: TPascalString; Style_: TTextStyle; SpecialSymbol_: TListPascalString; SpacerSymbol_: SystemString);
 begin
   inherited Create;
   ParsingData.Cache.CommentDecls := nil;
   ParsingData.Cache.TextDecls := nil;
   ParsingData.Cache.TokenDataList := nil;
   SetLength(ParsingData.Cache.CharToken, 0);
-  if AText.Len = 0 then
+  if Text_.Len = 0 then
       ParsingData.Text := #13#10
   else
-      ParsingData.Text := AText + #32;
+      ParsingData.Text := Text_ + #32;
   ParsingData.Len := ParsingData.Text.Len + 1;
-  TextStyle := AStyle;
-  SymbolTable := V_SpacerSymbol;
+  TextStyle := Style_;
+  SymbolTable := SpacerSymbol_;
   TokenStatistics := NullTokenStatistics;
   SpecialSymbol := TListPascalString.Create;
-  if ASpecialSymbol <> nil then
-      SpecialSymbol.Assign(ASpecialSymbol);
+  if SpecialSymbol_ <> nil then
+      SpecialSymbol.Assign(SpecialSymbol_);
   RebuildCacheBusy := False;
 
   RebuildParsingCache;
@@ -2506,52 +3198,19 @@ begin
   Init;
 end;
 
-constructor TTextParsing.Create(const AText: TPascalString; AStyle: TTextStyle);
+constructor TTextParsing.Create(const Text_: TPascalString; Style_: TTextStyle; SpecialSymbol_: TListPascalString);
 begin
-  inherited Create;
-  ParsingData.Cache.CommentDecls := nil;
-  ParsingData.Cache.TextDecls := nil;
-  ParsingData.Cache.TokenDataList := nil;
-  SetLength(ParsingData.Cache.CharToken, 0);
-  if AText.Len = 0 then
-      ParsingData.Text := #13#10
-  else
-      ParsingData.Text := AText + #32;
-  ParsingData.Len := ParsingData.Text.Len + 1;
-  TextStyle := AStyle;
-  SymbolTable := V_SpacerSymbol;
-  TokenStatistics := NullTokenStatistics;
-  SpecialSymbol := TListPascalString.Create;
-  RebuildCacheBusy := False;
-
-  RebuildParsingCache;
-
-  Init;
+  Create(Text_, Style_, SpecialSymbol_, SpacerSymbol.V);
 end;
 
-constructor TTextParsing.Create(const AText: TPascalString; AStyle: TTextStyle; ASpecialSymbol: TListPascalString; ASpacerSymbol: SystemString);
+constructor TTextParsing.Create(const Text_: TPascalString; Style_: TTextStyle);
 begin
-  inherited Create;
-  ParsingData.Cache.CommentDecls := nil;
-  ParsingData.Cache.TextDecls := nil;
-  ParsingData.Cache.TokenDataList := nil;
-  SetLength(ParsingData.Cache.CharToken, 0);
-  if AText.Len = 0 then
-      ParsingData.Text := #13#10
-  else
-      ParsingData.Text := AText + #32;
-  ParsingData.Len := ParsingData.Text.Len + 1;
-  TextStyle := AStyle;
-  SymbolTable := ASpacerSymbol;
-  TokenStatistics := NullTokenStatistics;
-  SpecialSymbol := TListPascalString.Create;
-  if ASpecialSymbol <> nil then
-      SpecialSymbol.Assign(ASpecialSymbol);
-  RebuildCacheBusy := False;
+  Create(Text_, Style_, nil, SpacerSymbol.V);
+end;
 
-  RebuildParsingCache;
-
-  Init;
+constructor TTextParsing.Create(const Text_: TPascalString);
+begin
+  Create(Text_, tsText, nil, SpacerSymbol.V);
 end;
 
 destructor TTextParsing.Destroy;
@@ -2609,5 +3268,23 @@ begin
       DoStatus(PFormat('index: %d type: %s value: %s', [i, GetEnumName(TypeInfo(TTokenType), Ord(pt^.tokenType)), pt^.Text.Text]));
     end;
 end;
+
+procedure FillSymbol_Test_;
+var
+  t: TTextParsing;
+  SM: TSymbolMatrix;
+begin
+  t := TTextParsing.Create('1,2,3,4,5,6,7,8,9', tsPascal);
+  t.FillSymbolMatrix(3, 2, SM);
+  DisposeObject(t);
+end;
+
+initialization
+
+SpacerSymbol := TAtomString.Create(C_SpacerSymbol);
+
+finalization
+
+DisposeObjectAndNil(SpacerSymbol);
 
 end.
