@@ -55,6 +55,10 @@
   // multi thread Parallel switch.
   {$DEFINE Parallel}
 
+  // Parallel for fold make better use CPU of multi core
+  // if rem this "FoldParallel" parallel for block program, thread can use linear address
+  {$DEFINE FoldParallel}
+
   // MT19937 of seed in the startup TComputeThread is 0
   {$DEFINE MT19937SeedOnTComputeThreadIs0}
 
@@ -89,13 +93,17 @@
   {$DEFINE LITTLE_ENDIAN}
   {$UNDEF BIG_ENDIAN}
 
-  {$IFDEF ANDROID}
-    {$DEFINE FirstCharInZero}
-  {$ENDIF}
+  {$IFDEF VER340}
+    {$UNDEF FirstCharInZero}
+  {$ELSE VER340}
+    {$IFDEF ANDROID}
+      {$DEFINE FirstCharInZero}
+    {$ENDIF ANDROID}
 
-  {$IFDEF IOS}
-    {$DEFINE FirstCharInZero}
-  {$ENDIF}
+    {$IFDEF IOS}
+      {$DEFINE FirstCharInZero}
+    {$ENDIF IOS}
+  {$ENDIF VER340}
 
   {$DEFINE Delphi}
 
@@ -111,6 +119,10 @@
 
   // multi thread Parallel switch.
   {$DEFINE Parallel}
+
+  // Parallel for fold make better use CPU of multi core
+  // if rem this "FoldParallel" is parallel for block program, thread can use linear address
+  {$DEFINE FoldParallel}
 
   // Parallel programs use the delphi default TParallel
   // {$DEFINE SystemParallel}
