@@ -1,6 +1,4 @@
-ï»¿{$IFDEF FPC}
-
-  //{$DEFINE FPC_DEBUG}
+{$IFDEF FPC}
   {$UNDEF FPC_DEBUG}
 
   {$IFDEF FPC_DELPHI_MODE}
@@ -109,13 +107,13 @@
     {$DEFINE release}
     {$DEFINE INLINE_ASM}
     {$OPTIMIZATION LEVEL2}
-    {$S-}   { No stack checks â€“ faster, but risk of silent stack overflow }
+    {$S-}   { No stack checks ¨C faster, but risk of silent stack overflow }
   {$ENDIF FPC_DEBUG}
 
   {$CODEPAGE UTF8}
   {$PACKENUM 4}    (* use 4-byte enums *)
-  {$R-}   { No range checks â€“ faster, assumes all indices are valid }
-  {$I-}   { No I/O checks â€“ faster, use IOResult to handle errors manually }
+  {$R-}   { No range checks ¨C faster, assumes all indices are valid }
+  {$I-}   { No I/O checks ¨C faster, use IOResult to handle errors manually }
 
 {$ELSE FPC} { IF DELPHI }
   {$DEFINE Delphi}
@@ -248,8 +246,8 @@
   {$ELSE release}
     {$UNDEF INLINE_ASM}
     {$O-} { close optimization }
-    {$R+} { range check }
-    {$I+} { Input output checking }
+    {$R-} { range check }
+    {$I-} { Input output checking }
     {$D+} { debug information }
   {$ENDIF release}
 
@@ -266,13 +264,6 @@
     {$DEFINE PhysicsIO_On_FPC_CrossSocket}
   {$ELSE}
     // PhysicsIO interface
-    // {$DEFINE PhysicsIO_On_ICS}
-    // {$DEFINE PhysicsIO_On_ICS9}
-    // {$DEFINE PhysicsIO_On_CrossSocket}
-    // {$DEFINE PhysicsIO_On_FPC_CrossSocket}
-    // {$DEFINE PhysicsIO_On_DIOCP}
-    // {$DEFINE PhysicsIO_On_Indy}
-    //  {$DEFINE PhysicsIO_On_Synapse}
     {$DEFINE PhysicsIO_On_FPC_CrossSocket}
   {$IFEND}
 
@@ -464,213 +455,3 @@
 {$IFOPT Q+}
   {$DEFINE OverflowCheck}
 {$ENDIF}
-
-(*
-  {$IFDEF FPC}
-    Z.FPC.GenericList,
-  {$ENDIF FPC}
-
-  {$IFDEF INLINE_ASM}inline;{$ENDIF INLINE_ASM}
-
-  {$IFDEF DEBUG}
-  {$ELSE DEBUG}
-  {$ENDIF DEBUG}
-
-  {$IFDEF SSE_Optimize_Distance_Compute}
-  {$ELSE SSE_Optimize_Distance_Compute}
-  {$ENDIF SSE_Optimize_Distance_Compute}
-
-  {$IFDEF DEBUG}
-  {$ENDIF DEBUG}
-
-  {$IFDEF Intermediate_Instance_Tool}
-  {$ELSE Intermediate_Instance_Tool}
-  {$ENDIF Intermediate_Instance_Tool}
-
-  {$IFDEF FPC}
-  {$ELSE FPC}
-  {$ENDIF FPC}
-
-  {$IFDEF FPC}TMarshal{$ELSE FPC}TMarshaller{$ENDIF FPC}
-
-  {$IFDEF FPC}
-  {$ENDIF FPC}
-
-  {$IFDEF DELPHI}
-  {$ENDIF DELPHI}
-
-  {$IFDEF DELPHI}
-  {$ELSE DELPHI}
-  {$ENDIF DELPHI}
-
-  {$IFDEF Print_OPCode_Debug}
-  {$ELSE Print_OPCode_Debug}
-  {$ENDIF Print_OPCode_Debug}
-
-  {$IFDEF DoubleIOFileSystem}
-  {$ELSE DoubleIOFileSystem}
-  {$ENDIF DoubleIOFileSystem}
-
-  {$IFDEF FPC}@{$ENDIF FPC}
-  {$IFDEF FPC}specialize {$ENDIF FPC}
-
-  {$IFNDEF FPC}
-  {$ENDIF FPC}
-
-  {$IFDEF CPU64}
-  {$ENDIF CPU64}
-
-  {$IFDEF CPU64}
-  {$ELSE CPU64}
-  {$ENDIF CPU64}
-
-  {$IFDEF Communication_QuietMode}{$ELSE Communication_QuietMode}{$ENDIF Communication_QuietMode}
-
-  {$IFDEF JPEG_Debug}
-  {$ENDIF JPEG_Debug}
-
-  {$IFDEF Linux}
-  {$ELSE Linux}
-  {$ENDIF Linux}
-
-  {$IFDEF MSWINDOWS}
-  {$ELSE MSWINDOWS}
-  {$ENDIF MSWINDOWS}
-
-  {$IFDEF MSWINDOWS}
-  {$ENDIF MSWINDOWS}
-
-  {$IFDEF LINUX}
-  {$ENDIF LINUX}
-
-  {$IFDEF FREEBSD}
-  {$ENDIF FREEBSD}
-
-  {$IFDEF Parallel}
-  {$ELSE Parallel}
-  {$ENDIF Parallel}
-
-  {$IFNDEF Parallel}
-  {$ENDIF Parallel}
-
-  {$IFDEF LimitMaxParallelThread}
-  {$ELSE LimitMaxParallelThread}
-  {$ENDIF LimitMaxParallelThread}
-
-  {$IFDEF initializationStatus}
-  {$ENDIF initializationStatus}
-
-  {$IFDEF SHOW_ZDB2_THREAD_BUILD_LOG}
-  {$ELSE SHOW_ZDB2_THREAD_BUILD_LOG}
-  {$ENDIF SHOW_ZDB2_THREAD_BUILD_LOG}
-
-  {$IFDEF SHOW_DISPOSEOBJECT_PRINTINFO_LOG}
-  {$ELSE SHOW_DISPOSEOBJECT_PRINTINFO_LOG}
-  {$ENDIF SHOW_DISPOSEOBJECT_PRINTINFO_LOG}
-
-  {$IFDEF Encrypt_P2PVM_Packet}
-  {$ELSE Encrypt_P2PVM_Packet}
-  {$ENDIF Encrypt_P2PVM_Packet}
-
-  {$IFDEF UNICODE}{$ELSE UNICODE}{$ENDIF UNICODE}
-
-  {$Region 'RegionName'}
-  {$EndRegion 'RegionName'}
-
-  {$IFDEF OverflowCheck}{$Q-}{$ENDIF}
-  {$IFDEF OverflowCheck}{$Q+}{$ENDIF}
-
-  {$IFDEF RangeCheck}{$R-}{$ENDIF}
-  {$IFDEF RangeCheck}{$R+}{$ENDIF}
-
-  {$IFDEF Z_AI_Dataset_Build_In}
-  {$ELSE Z_AI_Dataset_Build_In}
-  {$ENDIF Z_AI_Dataset_Build_In}
-
-  {$IFDEF MT19937SeedOnTComputeThreadIs0}
-  {$ELSE MT19937SeedOnTComputeThreadIs0}
-  {$ENDIF MT19937SeedOnTComputeThreadIs0}
-
-  {$IFDEF Enabled_ZDB2_Load_Thread}
-  {$ELSE Enabled_ZDB2_Load_Thread}
-  {$ENDIF Enabled_ZDB2_Load_Thread}
-
-  {$IFDEF LimitMaxComputeThread}
-  {$ELSE LimitMaxComputeThread}
-  {$ENDIF LimitMaxComputeThread}
-
-  {$IFDEF ZDB2_Thread_Engine_Safe_Flush}
-  {$ELSE ZDB2_Thread_Engine_Safe_Flush}
-  {$ENDIF ZDB2_Thread_Engine_Safe_Flush}
-
-  {$IFDEF C4_Safe_Flush}
-  {$ELSE C4_Safe_Flush}
-  {$ENDIF C4_Safe_Flush}
-
-{$IFDEF Parallel}
-{$IFDEF FPC}
-  procedure Nested_ParallelFor(pass: Integer);
-  begin
-  end;
-{$ENDIF FPC}
-{$ELSE Parallel}
-  procedure DoFor();
-  var
-    pass: Integer;
-  begin
-    for pass:= 0 to Count - 1 do
-      begin
-      end;
-  end;
-{$ENDIF Parallel}
-
-{$IFDEF Parallel}
-{$IFDEF FPC}
-      FPCParallelFor(0, Count - 1, Nested_ParallelFor);
-{$ELSE FPC}
-      DelphiParallelFor(0, Count - 1, procedure(pass: Integer)
-        begin
-        end);
-{$ENDIF FPC}
-{$ELSE Parallel}
-      DoFor();
-{$ENDIF Parallel}
-
-
-
-
-{$IFDEF FPC}
-  procedure fpc_progress_(const Name_: PSystemString; Obj: TNumberModule);
-  begin
-  end;
-{$ENDIF FPC}
-
-{$IFDEF FPC}
-  NMPool.ProgressP(fpc_progress_);
-{$ELSE FPC}
-  FList.ProgressP(procedure(const Name_: PSystemString; Obj: TNumberModule)
-    begin
-    end);
-{$ENDIF FPC}
-
-
-
-
-{$IFDEF FPC}
-  procedure fpc_progress_(bPos, ePos: Integer; sour, dest: PPascalString; var Accept: Boolean);
-  begin
-    Inc(num);
-  end;
-{$ENDIF FPC}
-
-{$IFDEF FPC}
-      umlReplace(Name, OLD_, New_, OnlyWord, IgnoreCase, 0, 0, nil, fpc_progress_);
-{$ELSE FPC}
-      umlReplace(Name, OLD_, New_, OnlyWord, IgnoreCase, 0, 0, nil,
-        procedure(bPos, ePos: Integer; sour, dest: PPascalString; var Accept: Boolean)
-        begin
-        end);
-{$ENDIF FPC}
-
-*)
-
