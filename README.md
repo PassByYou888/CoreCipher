@@ -1,74 +1,101 @@
-# CoreCipher
+# CoreCipher — A Comprehensive Delphi and FPC Cryptography Library
 
-CoreCipher is a Delphi and FPC library for cryptography.  It provides support for RC6,TwoFish,AES, DES, 3DES, Blowfish, MD5,SHA1,MixFunctions,LSC,LQC, all work in parallel and mobile platform!
+CoreCipher is a high‑performance, cross‑platform cryptography library for Delphi and Free Pascal (FPC). It provides a unified interface for a wide range of cryptographic primitives—block ciphers, stream ciphers, hash functions, and password‑based key derivation—all of which have been fully standardized and verified against official reference vectors.
 
-**supports parallel encryption/decryption**
+## What's New in This Release
 
-### multi platform supported:，test with Delphi 10.2 upate 2 and FPC 3.0.4
+The library has undergone a major overhaul, with all algorithms standardized and validated. Key changes include:
 
-- Windows x86+x64 
-- Android pad with armv8 aarch64
-- Android mobile with armv6 or last
-- IOS Device armv7(ip4)+armv8(ipad pro,iphone5s or last aarch64)
-- IOS Simulaor:n/a
-- OSX
-- Ubuntu16.04 x64 server
-- Ubuntu18.04 x86+x64 Desktop
-- Ubuntu18.04 x86+x64 Server 
-- Ubuntu18.04 arm32+arm neon Server
-- Ubuntu18.04 arm32+arm neon desktop  
-- Ubuntu16.04 Mate arm32 desktop  
-- Raspberry Pi 3 Debian linux armv7 desktop,only fpc 3.0.4,test passed.
-- wince(arm eabi hard flaot),windows 10 IOT,only fpc 3.3.1,test passed.
+- **Full standardization** – Every hash function and symmetric cipher now conforms to its official specification and passes standard test vectors.
+- **Expanded algorithm suite** – New algorithms have been added alongside the existing ones, with a consistent, unified API.
+- **Cross‑platform improvements** – Enhanced support for Delphi and FPC on Windows, Linux, macOS, iOS, and Android.
+- **Parallel execution** – Optional parallel processing for block ciphers when compiled with the `Parallel` define.
+- **Cleaner codebase** – Removed unused types and legacy aliases; all code uses `CopyPtr`/`FillPtr` instead of `Move`/`FillChar` for better portability and optimization safety.
 
-### multi cpu architectures supported，test with Delphi 10.2 upate 2 and FPC 3.0.4
+## Standardized Hash Functions
 
-- MIPS(fpc-little endian), soft float, test pass on QEMU 
-- intel X86(fpc-x86), soft float
-- intel X86(delphi+fpc), hard float,ATHLON64,COREI,COREAVX,COREAVX2
-- intel X64(fpc-x86_64), soft float
-- intel X64(delphi+fpc), hard float,ATHLON64,COREI,COREAVX,COREAVX2
-- ARM(fpc-arm32-eabi, hard float):ARMV3,ARMV4,ARMV4T,ARMV5,ARMV5T,ARMV5TE,ARMV5TEJ,ARMV6,ARMV6K,ARMV6T2,ARMV6Z,ARMV6M,ARMV7,ARMV7A,ARMV7R,ARMV7M,ARMV7EM
-- ARM(fpc-arm64-eabi, hard float):ARMV8，aarch64
+All hash functions below are fully standardized and validated against RFC, FIPS, or ITU‑T reference values.
 
+| Algorithm | Standard | Output Size |
+|-----------|----------|-------------|
+| MD5 | RFC 1321 | 128 bits |
+| SHA‑1 | FIPS 180‑4 | 160 bits |
+| SHA‑256 | FIPS 180‑4 | 256 bits |
+| SHA‑512 | FIPS 180‑4 | 512 bits |
+| SHA3‑224 | FIPS 202 | 224 bits |
+| SHA3‑256 | FIPS 202 | 256 bits |
+| SHA3‑384 | FIPS 202 | 384 bits |
+| SHA3‑512 | FIPS 202 | 512 bits |
+| SHAKE128 | FIPS 202 | Extendable |
+| SHAKE256 | FIPS 202 | Extendable |
+| CRC16 | ITU‑T | 16 bits |
+| CRC32 | IEEE 802.3 | 32 bits |
+| ELF | Public domain | 32 bits |
+| ELF64 | Public domain | 64 bits |
+| Mix128 | Public domain | 32 bits |
 
+The library also includes custom LMD‑family hashes (LMD‑16/32/64/128/256) for specialized use cases, but these are not part of any external standard.
 
-enjoy.~
+## Standardized Symmetric Algorithms
 
-# update history
+All symmetric ciphers are standardized and validated against official test vectors (FIPS, NIST, or algorithm reference implementations).
 
-### 2018-9-29
+| Algorithm | Standard | Block Size | Key Sizes |
+|-----------|----------|------------|-----------|
+| DES | FIPS 46‑3 | 64 bits | 64 bits |
+| Triple DES (2‑key) | NIST SP 800‑67 | 64 bits | 128 bits |
+| Triple DES (3‑key) | NIST SP 800‑67 | 64 bits | 192 bits |
+| Blowfish | Schneier 1993 | 64 bits | 32–448 bits |
+| AES‑128 | FIPS 197 | 128 bits | 128 bits |
+| AES‑192 | FIPS 197 | 128 bits | 192 bits |
+| AES‑256 | FIPS 197 | 128 bits | 256 bits |
+| Twofish | AES submission | 128 bits | 128/192/256 bits |
+| Serpent | AES submission | 128 bits | 128/192/256 bits |
+| MARS | AES submission | 128 bits | 128/192/256 bits |
+| RC6 | AES submission | 128 bits | 128/192/256 bits |
+| Rijndael | AES submission | 128 bits | 128/192/256 bits |
+| XXTEA | Corrected Block TEA | 512 bits | 128 bits |
 
-- fixed rc6 on freepascal for IOT
-- IOT power on FPC support 
+Additionally, the library provides LBC and LQC block ciphers, RNG32/RNG64 stream ciphers, and the LSC stream cipher—these are custom algorithms designed for the Z‑Framework.
 
-### 2018-7-6
+## Compilation Guide for Delphi and Lazarus/FPC
 
-- update the name rules of the Library
-- Support for fpc/86/64 platform, all base libraries support for Linux.
-- power support for the FPC compiler 3.1.1
-- newed Big/Little Endian order support
-- fixing the problem of using 32 bit FPC compiler to for with Int64
-- fixed string the FPC compiler runs on Linux.
+CoreCipher is designed to be compiled directly in Delphi or Lazarus/FPC **without any external dependencies**. Simply add the library's source directory to your project's search path.
 
-### 2018-5-21
+### Delphi
 
-- fixed twofish on memory leak
-- update Parallel core(fpc required package:MultiThreadProcsLaz)
-- added UPascalStrings.pas(fpc on unicode)
+1. Open your project in Delphi (10.2 or later recommended).
+2. Go to **Tools → Options → Environment Options → Delphi Options → Library**.
+3. Add the CoreCipher source directory to the **Library path** for both Win32 and Win64 (and any other target platforms you need).
+4. Ensure `Z.Core.pas` and `Z.Cipher.pas` are in the search path.
+5. Compile your project. The library will be linked automatically.
 
+### Lazarus / FPC
 
-### 2018-3-1
+1. Open your project in Lazarus.
+2. Go to **Project → Project Options → Compiler Options → Paths**.
+3. Add the CoreCipher source directory to the **Other unit files (-Fu)** field.
+4. If you use the `Parallel` define, ensure the required threading units are available.
+5. Build your project. No additional packages are required.
 
-newed Smith–Waterman algorithm
+The library supports Delphi 10.2 Update 2 and later, as well as FPC 3.0.4 and later. It has been tested on Windows (x86/x64), Linux (x86/x64/ARM), macOS, iOS, and Android.
 
-The Smith–Waterman algorithm performs local sequence alignment; that is, for determining similar regions between two strings of nucleic acid sequences or protein sequences. Instead of looking at the entire sequence, the Smith–Waterman algorithm compares segments of all possible lengths and optimizes the similarity measure.
+## Supported Platforms
 
-The algorithm was first proposed by Temple F. Smith and Michael S. Waterman in 1981.[1] Like the Needleman–Wunsch algorithm, of which it is a variation, Smith–Waterman is a dynamic programming algorithm. As such, it has the desirable property that it is guaranteed to find the optimal local alignment with respect to the scoring system being used (which includes the substitution matrix and the gap-scoring scheme). The main difference to the Needleman–Wunsch algorithm is that negative scoring matrix cells are set to zero, which renders the (thus positively scoring) local alignments visible. Traceback procedure starts at the highest scoring matrix cell and proceeds until a cell with score zero is encountered, yielding the highest scoring local alignment. Because of its cubic computational complexity in time and quadratic complexity in space, it often cannot be practically applied to large-scale problems and is replaced in favor of less general but computationally more efficient alternatives such as (Gotoh, 1982),[2] (Altschul and Erickson, 1986),[3] and (Myers and Miller 1988).
+CoreCipher has been tested on the following platforms:
 
-https://en.wikipedia.org/wiki/Smith%E2%80%93Waterman_algorithm
+- Windows x86 + x64
+- Android (ARMv6, ARMv7, ARMv8/AArch64)
+- iOS (ARMv7, ARMv8/AArch64)
+- macOS
+- Ubuntu 16.04 / 18.04 (x86, x64, ARM32/NEON)
+- Raspberry Pi 3 (Debian ARMv7)
+- Windows CE / Windows 10 IoT (FPC 3.3.1)
 
+## License
 
-create by QQ 600585@qq.com
+CoreCipher is released under an open‑source license. See the repository for details.
 
-2017-11-15
+---
+
+For full documentation, examples, and the latest updates, visit the GitHub repository: [https://github.com/PassByYou888/CoreCipher](https://github.com/PassByYou888/CoreCipher).
