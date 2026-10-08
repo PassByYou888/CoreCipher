@@ -8,7 +8,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, StdCtrls,
-  CoreCipher, DoStatusIO, PascalStrings;
+  Z.Cipher, Z.Status, Z.PascalStrings;
 
 type
 
@@ -60,4 +60,3 @@ begin
 end;
 
 end.
-
